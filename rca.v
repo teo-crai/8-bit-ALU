@@ -18,7 +18,7 @@ module rca#(parameter w)(
   genvar i;
   generate
   for(i=0;i<w;i=i+1) begin: v
-    fac f1(.a(a[i]),.b(b[i]),.cin(c_aux[i]),sum(sum[i]),.cout(c_aux[i+1]));
+    fac f1(.a(a[i]),.b(b[i]),.cin(c_aux[i]),.sum(sum[i]),.cout(c_aux[i+1]));
   end
   endgenerate
   assign cout=c_aux[w];
