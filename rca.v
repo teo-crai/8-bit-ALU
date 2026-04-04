@@ -10,8 +10,8 @@ module rca#(parameter w)(
   input [w-1:0]a,
   input [w-1:0]b,
   input cin,
-  output reg [w-1:0]sum,
-  output reg cout
+  output wire [w-1:0]sum,
+  output wire cout
   );
   wire [w:0]c_aux;
   assign c_aux[0]=cin;
