@@ -1,0 +1,129 @@
+module alu(
+  input clk, rst,
+  input c_add, c_sub, c_mult, c_div,
+  input [7:0] x,
+  input [7:0] y,
+  output reg [15:0] rez
+);
+
+  /* ---------- ADD / SUB ---------- */
+  wire [7:0] add_sum;
+  wire add_cout;
+
+  rca #(.w(8)) add_inst (
+      .a(x),
+      .b(c_sub ? ~y : y),   // subtraction via 2's complement
+      .cin(c_sub),
+      .sum(add_sum),
+      .cout(add_cout)
+  );
+
+  /* ---------- MULT ---------- */
+  wire [15:0] mult_prod;
+  wire mult_flag;
+
+  multiplier mult_inst(
+      .a(x),
+      .b(y),
+      .clk(clk),
+      .start(1'b0),
+      .prod(mult_prod),
+      .flag_cnt(mult_flag)
+  );
+
+  /* ---------- DIV ---------- */
+  wire [7:0] q, r;
+  wire div_flag;
+
+  divider div_inst(
+      .clk(clk),
+      .start(1'b0),
+      .dividend({8'b0,x}),
+      .divisor(y),
+      .quotient(q),
+      .remainder(r),
+      .flag_cnt(div_flag)
+  );
+
+  /* ---------- RESULT SELECT ---------- */
+  always @(posedge clk or negedge rst) begin
+    if(!rst)
+        rez <= 16'b0;
+    else begin
+        if(c_add || c_sub)
+            rez <= {8'b0, add_sum};
+
+        else if(c_mult)
+            rez <= mult_prod;
+
+        else if(c_div)
+            rez <= {r, q};
+    end
+  end
+
+endmodule
+
+module alu_tb;
+  reg clk, rst;
+  reg c_add, c_sub, c_mult, c_div;
+  reg [7:0] x;
+  reg [7:0] y;
+  wire [15:0] rez;
+  
+  alu cut(
+    .clk(clk),
+    .rst(rst),
+    .c_add(c_add),
+    .c_sub(c_sub),
+    .c_mult(c_mult),
+    .c_div(c_div),
+    .x(x),
+    .y(y),
+    .rez(rez)
+    );
+    always #5 clk = ~clk; //perioada de 10 ns
+    initial begin
+    $display("Testbench...");
+    $monitor("time=%0t | x=%d y=%d | rez=%d (0x%h)",
+              $time, x, y, rez, rez);
+    clk = 0;
+    rst = 0;
+    c_add = 0;
+    c_sub = 0;
+    c_mult = 0;
+    c_div = 0;
+    x = 0;
+    y = 0;
+    //initial reset
+    #20;
+    rst = 1;
+    //adunare
+    #10;
+    x = 8'd10;
+    y = 8'd5;
+    c_add = 1;
+    #20;
+    c_add = 0;
+    //scadere
+    #20;
+    x = 8'd20;
+    y = 8'd7;
+    c_sub = 1;
+    #20;
+    c_sub = 0;
+    //produs
+    #20;
+    x = 8'd6;
+    y = 8'd4;
+    c_mult = 1;
+    #120;   //mai multe cicluri
+    c_mult = 0;
+    //impartire
+    #20;
+    x = 8'd40;
+    y = 8'd6;
+    c_div = 1;
+    #120;   // divider iterative cycles
+    c_div = 0;
+  end
+endmodule

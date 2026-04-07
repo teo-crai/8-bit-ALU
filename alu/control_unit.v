@@ -34,6 +34,7 @@ module fsm(
       ST_WRITE: if(rst) st_next=ST_RST;
                 else if(load) st_next=ST_LOAD;
                 else if(e) st_next=ST_END;
+    endcase
    end
    always @ (*) begin 
      case(st)
@@ -41,5 +42,6 @@ module fsm(
        ST_SUB: {c_add,c_sub,c_mult,c_div}=4'b0100;
        ST_MULT: {c_add,c_sub,c_mult,c_div}=4'b0010;
        ST_DIV: {c_add,c_sub,c_mult,c_div}=4'b0001;
+     endcase
    end
  endmodule

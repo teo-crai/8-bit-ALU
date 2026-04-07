@@ -1,0 +1,117 @@
+m255
+K3
+13
+cModel Technology
+Z0 dC:\Users\teocr\Desktop\Programare\CN\alu\alu
+valu
+!s100 3ih6Jh[Qb[Y<K5P_[EA@=1
+IfDc[Bf@@R@cGz4cUm?k7[0
+VQd^?_SlhDQel9cM<>Phn31
+Z1 w1775549903
+Z2 8alu.v
+Z3 Falu.v
+L0 1
+Z4 OV;L;6.5b;42
+r1
+!s85 0
+31
+!s101 -O0
+o-O0
+valu_tb
+!s100 @j6VEGmV5GOce85=_0_3<0
+I^0^Yd;XD7nK9HW3P8Chd:2
+VL;=kgzZ7GJ2Reg7Z1GkmR2
+R1
+R2
+R3
+L0 66
+R4
+r1
+!s85 0
+31
+!s101 -O0
+o-O0
+vdivider
+IkocXfi1oRMC:;?B2_h9h92
+VDCH>7cAofz8PSQ`_@X@cG2
+Z5 w1775499373
+8divider.v
+Fdivider.v
+L0 1
+R4
+r1
+31
+o-O0
+!s100 M3f]JAEhW6C5:IO3;6dk;1
+!s85 0
+!s101 -O0
+vfac
+I7ReSoaI21WfDn:lj^Wz@V3
+VXo5dkd6<LICdLo3Qck<9j0
+Z6 w1775550164
+Z7 8rca.v
+Z8 Frca.v
+L0 1
+R4
+r1
+31
+o-O0
+!s100 @efRid=U3_m;FF718TCZc3
+!s85 0
+!s101 -O0
+vfsm
+IQdS5o0ZjAcA7NDNT9R6SY3
+VSFonBPbETjJmPcNbZ=Gi@0
+w1775550347
+8control_unit.v
+Fcontrol_unit.v
+L0 1
+R4
+r1
+31
+o-O0
+!s100 L`O0ekBe77l=>==VBS1mI3
+!s85 0
+!s101 -O0
+vmultiplier
+I:Ef5bcb2kR>VmkLM_Jz6j0
+VE7a1?[kX76n;h<TP?jS<O1
+R5
+8multiplier.v
+Fmultiplier.v
+L0 1
+R4
+r1
+31
+o-O0
+!s100 AjGMQJORd;YmXR`ngMN4X2
+!s85 0
+!s101 -O0
+vrca
+IAe?J<c;ZO0j:HIJ[jP=n?2
+VOfggU<_[I0b1[h=`:T>>l0
+R6
+R7
+R8
+L0 9
+R4
+r1
+31
+o-O0
+!s100 2h>AS6533j:M:TlXCo5XE1
+!s85 0
+!s101 -O0
+vtb_multiplier
+I8KOMIlK?zk=lg`W4n_cgD3
+VzjL;ioaV=?_4H6n?5lzoa2
+R5
+8multiplier_tb.v
+Fmultiplier_tb.v
+L0 1
+R4
+r1
+31
+o-O0
+!s100 PKTRRClYoCTPmmI5nZIf>1
+!s85 0
+!s101 -O0
