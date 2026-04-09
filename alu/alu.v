@@ -1,9 +1,9 @@
 module alu(
   input clk, rst,
-  input c_add, c_sub, c_mult, c_div,
-  input [7:0]x,
+  input c_add, c_sub, c_mult, c_div, //semnalele care decid operatia
+  input [7:0]x, //operanzii
   input [7:0]y,
-  output reg [15:0]rez
+  output reg [15:0]rez //rezultatul
 );
 
   //detector de front pentru semnalele de start
@@ -113,7 +113,7 @@ module alu_tb;
     x = 0;
     y = 0;
     
-    //initial reset
+    //reset initial
     #20;
     rst = 1;
     
@@ -153,7 +153,7 @@ module alu_tb;
     y = 8'd6;
     c_div = 1;
   
-    #120;   // divider iterative cycles
+    #120;
     $display("x=%d y=%d | cat=%d, rest=%d", x, y, rez[7:0], rez[15:8]);
     c_div = 0;
     
