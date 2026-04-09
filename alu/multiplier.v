@@ -20,7 +20,7 @@ module multiplier(
       Q_1 <= 1'b0; //Q[-1] e initial 0
       CNT <= 4'b0; //contorul se initializeaza pe 0
     end
-    else begin
+    else if (CNT < 8) begin
       case ({Q[0], Q_1}) //analizam bitii 0 si -1 pentru a decide urmatoarea operatie
         2'b0_1: {A, Q, Q_1} <= {sum[7], sum, Q}; //cazul 01, se efectueaza adunarea dintre A si M si se shifteaza {A, Q} la dreapta cu o pozitie
         2'b1_0: {A, Q, Q_1} <= {difference[7], difference, Q}; //cazul 10, se efectueaza scaderea lui M din A si se shifteaza {A, Q} la dreapta cu o pozitie
