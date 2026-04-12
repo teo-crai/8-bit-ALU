@@ -4,16 +4,16 @@ module fsm(
   output reg c_add,c_sub,c_mult,c_div
   );
   //codificare pentru fiecare stare
-  localparam ST_BEGIN=3'd0; 
-  localparam ST_LOAD=3'd1; //se incarca datele in registru
-  localparam ST_DECODE=3'd2; //decodeaza operatia care trebuie efectuata
-  localparam ST_ADD=3'd3; //starea care indica ca se efectueaza operatia de adunare
-  localparam ST_SUB=3'd4; //starea care indica ca se efectueaza operatia de scadere
-  localparam ST_MULT=3'd5; //starea care indica ca se efectueaza operatia de inmultire
-  localparam ST_DIV=3'd6; //starea care indica ca se efectueaza operatia de impartire
-  localparam ST_WRITE=3'd7; //starea care indica ca se afiseaza rezultatele
-  localparam ST_END=3'd8; //starea finala
-  localparam ST_RST=3'd9; //starea de reset 
+  localparam ST_BEGIN=4'd0; 
+  localparam ST_LOAD=4'd1; //se incarca datele in registru
+  localparam ST_DECODE=4'd2; //decodeaza operatia care trebuie efectuata
+  localparam ST_ADD=4'd3; //starea care indica ca se efectueaza operatia de adunare
+  localparam ST_SUB=4'd4; //starea care indica ca se efectueaza operatia de scadere
+  localparam ST_MULT=4'd5; //starea care indica ca se efectueaza operatia de inmultire
+  localparam ST_DIV=4'd6; //starea care indica ca se efectueaza operatia de impartire
+  localparam ST_WRITE=4'd7; //starea care indica ca se afiseaza rezultatele
+  localparam ST_END=4'd8; //starea finala
+  localparam ST_RST=4'd9; //starea de reset 
   
   reg [3:0]st; //starea curenta
   reg [3:0]st_next; //urmatoarea stare
