@@ -1,4 +1,4 @@
-module tb_multiplier;
+module multiplier_tb;
   reg [7:0] a;
   reg [7:0] b;
   reg clk;
@@ -17,62 +17,41 @@ module tb_multiplier;
   );
 
   always #5 clk = ~clk;
+  
+  task execute_multiplication(input [7:0] val_a, input [7:0] val_b);
+    begin
+      @(negedge clk); //asteptam frontul negativ pentru schimbarea datelor
+      a = val_a;
+      b = val_b;
+      start = 1;
+      
+      @(negedge clk); //tinem start activ pe parcursul unui ciclu de tact
+      start = 0;
+      
+      wait(flag_cnt == 0); //asteptam sa se termine algroritmul
+      #2; 
+      
+      $display("%d * %d = %d (bin: %b)", $signed(val_a), $signed(val_b), $signed(prod), prod);
+    end
+  endtask
 
   initial begin
+    //initializare
     clk = 0;
     start = 0;
     a = 0;
     b = 0;
-    
     #20;
 
-    // ---------------------------------------------
-    // Test Case 1: Positive * Positive (5 * 7 = 35)
-    // ---------------------------------------------
-    $display("--- Test 1: 5 * 7 ---");
-    a = 8'd5;      // Load multiplicand
-    b = 8'd7;      // Load multiplier
+    $display("--Testing--");
     
-    start = 1;      
-    #10;            
-    start = 0;      
-    
-    wait(flag_cnt == 0);
-    #10;
-    
-    $display("Result: %d * %d = %d (Expected: 35)\n", $signed(a), $signed(b), $signed(prod));
+    execute_multiplication(8'd5,   8'd7);
+    execute_multiplication(-8'd6,  8'd4);
+    execute_multiplication(-8'd8, -8'd3);
+    execute_multiplication(8'd12,  8'd10);
+    execute_multiplication(8'd127, 8'd2); 
 
-    // ---------------------------------------------
-    // Test Case 2: Negative * Positive (-6 * 4 = -24)
-    // ---------------------------------------------
-    $display("--- Test 2: -6 * 4 ---");
-    a = -8'd6;     
-    b = 8'd4;      
-    
-    start = 1;
-    #10;
-    start = 0;
-
-    wait(flag_cnt == 0);
-    #10;
-    $display("Result: %d * %d = %d (Expected: -24)\n", $signed(a), $signed(b), $signed(prod));
-
-    // ---------------------------------------------
-    // Test Case 3: Negative * Negative (-8 * -3 = 24)
-    // ---------------------------------------------
-    $display("--- Test 3: -8 * -3 ---");
-    a = -8'd8;
-    b = -8'd3;
-    
-    start = 1;
-    #10;
-    start = 0;
-
-    wait(flag_cnt == 0);
-    #10;
-    $display("Result: %d * %d = %d (Expected: 24)\n", $signed(a), $signed(b), $signed(prod));
-
-    $display("Simulation complete.");
+    $display("--Done--");
     $finish;
   end
 
