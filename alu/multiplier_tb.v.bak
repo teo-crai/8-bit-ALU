@@ -44,12 +44,13 @@ module multiplier_tb;
     #20;
 
     $display("--Testing--");
-    
+
+    // Acum doar apelezi task-ul cu valorile dorite
     execute_multiplication(8'd5,   8'd7);
     execute_multiplication(-8'd6,  8'd4);
     execute_multiplication(-8'd8, -8'd3);
     execute_multiplication(8'd12,  8'd10);
-    execute_multiplication(8'd127, 8'd2); 
+    execute_multiplication(8'd127, 8'd2); // Test limit? pozitiv?
 
     $display("--Done--");
     $finish;
