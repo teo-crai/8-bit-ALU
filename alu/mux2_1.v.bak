@@ -1,0 +1,11 @@
+module mux2_1 #(parameter w = 8) (
+    input [w-1:0]i0, i1, //inputurile din care selectam unul
+    input sel, //selectorul
+    output [w-1:0]out //iesirea
+);
+    if(sel) begin//selectam valoarea iesirii in functie de selector
+      assign out = i1;
+    else  
+      assign out = i0;
+    end
+endmodule

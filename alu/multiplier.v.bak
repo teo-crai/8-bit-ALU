@@ -49,6 +49,7 @@ module multiplier(
    
   wire done;
   assign done = (CNT == 4'd7); //activ doar cand am terminat cei 7 pasi
+  assign prod = 0;
 
   register#(.w(16)) res_latch (.clk(clk), .load(done), .d({A_in, Q_in}), .q(prod));
   //produsul final se afla prin concatenarea lui A si Q
