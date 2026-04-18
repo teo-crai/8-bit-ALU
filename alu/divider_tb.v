@@ -1,0 +1,67 @@
+module divider_tb;
+  reg [15:0] a;
+  reg [7:0] b;
+  reg clk;
+  reg start;
+  
+  wire [7:0]q;
+  wire [7:0]r;
+  wire flag_cnt;
+  wire div_zero_err;
+  
+  divider uut (
+    .dividend(a),
+    .divisor(b),
+    .quotient(q),
+    .remainder(r), 
+    .flag_cnt(flag_cnt), 
+    .clk(clk), 
+    .start(start),
+    .div_zero_err(div_zero_err)
+  );
+
+  always #5 clk = ~clk;
+
+  task execute_division(input [15:0] val_a, input [7:0] val_b);
+    begin
+      @(negedge clk); //asteptam frontul negativ pentru schimbarea datelor
+      a = val_a;
+      b = val_b;
+      start = 1;
+      
+      @(negedge clk); //tinem start activ pe parcursul unui ciclu de tact
+      start = 0;
+      
+      wait(flag_cnt == 0); //asteptam sa se termine algroritmul
+      #2; 
+      
+      if (div_zero_err)
+        $display("ERROR: Division with 0 detected: %d / %d !", val_a, val_b);
+      else
+        $display("Result: %d / %d = %d remainder %d", val_a, val_b, q, r);
+      
+    end
+  endtask
+
+  initial begin
+    //initializare
+    clk = 0;
+    start = 0;
+    a = 0;
+    b = 0;
+    #20;
+
+    $display("--Testing--");
+    
+    execute_division(16'd3625, 8'd107);
+    execute_division(16'd5824, 8'd99);
+    execute_division(16'd2000, 8'd10);
+    execute_division(16'd5432, 8'd24);
+    execute_division(16'd2056, 8'd65); 
+    execute_division(16'd2056, 8'd0); 
+
+    $display("--Done--");
+    $finish;
+  end
+  
+endmodule   

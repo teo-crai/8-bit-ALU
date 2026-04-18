@@ -18,7 +18,7 @@ module alu(
     wire [7:0] add_sum;
     wire add_cout;
     
-    // Complementul de 2 pentru sc?dere (Y xor c_sub)
+    //complementul de 2 pentru scadere (Y xor c_sub)
     wire [7:0] y_inv = y ^ {8{c_sub}};
 
     rca #(.w(8)) add_inst(
