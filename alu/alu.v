@@ -1,83 +1,84 @@
 module alu(
-  input clk, rst,
-  input c_add, c_sub, c_mult, c_div, //semnalele care decid operatia
-  input [7:0]x, //operanzii
-  input [7:0]y,
-  output reg [15:0]rez //rezultatul
+    input clk, rst,
+    input c_add, c_sub, c_mult, c_div,
+    input [7:0] x, y,
+    output [15:0] rez
 );
 
-  //detector de front pentru semnalele de start
-  //memoram valoarea anterioara a semnalelor pentru a detecta tranzitia de la 0 la 1
-  reg c_mult_prev, c_div_prev;
-  
-  always @(posedge clk or negedge rst) begin
-    if (!rst) begin
-      c_mult_prev <= 1'b0;
-      c_div_prev <= 1'b0;
-    end else begin
-      c_mult_prev <= c_mult;
-      c_div_prev <= c_div;
-    end
-  end
+    // --- 1. Detectie front---
+    wire c_mult_prev, c_div_prev;
 
-  //semnalul 'start' e 1 logic doar in ciclul de tact in care comanda trece din 0 in 1
-  wire start_mult = c_mult & ~c_mult_prev;
-  wire start_div  = c_div  & ~c_div_prev;
+    dff_reset ff_mult (.clk(clk), .rst(rst), .d(c_mult), .q(c_mult_prev));
+    dff_reset ff_div  (.clk(clk), .rst(rst), .d(c_div),  .q(c_div_prev));
 
-  //adunare/scadere
-  wire [7:0] add_sum; //rezultatul
-  wire add_cout; //carry out
+    wire start_mult = c_mult & ~c_mult_prev;
+    wire start_div  = c_div  & ~c_div_prev;
 
-  rca #(.w(8)) add_inst(
-      .a(x),
-      .b(c_sub ? ~y : y), //diferenta in C2
-      .cin(c_sub), 
-      .sum(add_sum),
-      .cout(add_cout)
-  );
+    // --- 2. Instantiere Unitati de Calcul ---
+    wire [7:0] add_sum;
+    wire add_cout;
+    
+    // Complementul de 2 pentru sc?dere (Y xor c_sub)
+    wire [7:0] y_inv = y ^ {8{c_sub}};
 
-  //inmultire
-  wire [15:0] mult_prod; //rezultatul
-  wire mult_flag; //semnalizeaza daca algoritmul s-a terminat
+    rca #(.w(8)) add_inst(
+        .a(x),
+        .b(y_inv),
+        .cin(c_sub), 
+        .sum(add_sum),
+        .cout(add_cout)
+    );
 
-  multiplier mult_inst(
-      .a(x),
-      .b(y),
-      .clk(clk),
-      .start(start_mult),
-      .prod(mult_prod),
-      .flag_cnt(mult_flag)
-  );
+    wire [15:0] mult_prod;
+    multiplier mult_inst(
+        .a(x), .b(y), .clk(clk), .start(start_mult),
+        .prod(mult_prod), .flag_cnt() // flag_cnt nefolosit aici
+    );
 
-  //impartire
-  wire [7:0] q, r; //catul si restul
-  wire div_flag; //semnalizeaza daca algoritmul s-a terminat
+    wire [7:0] q, r;
+    divider div_inst(
+        .clk(clk), .start(start_div),
+        .dividend({8'b0, x}), .divisor(y),
+        .quotient(q), .remainder(r), .flag_cnt()
+    );
 
-  divider div_inst(
-      .clk(clk),
-      .start(start_div),
-      .dividend({8'b0,x}),
-      .divisor(y),
-      .quotient(q),
-      .remainder(r),
-      .flag_cnt(div_flag)
-  );
+    // --- 3. Logica de Selectie ---
+    wire [15:0] mux_add_sub_val = {8'b0, add_sum};
+    wire [15:0] mux_div_val = {r, q};
+    
+    wire [15:0] out_mux1;
+    wire [15:0] out_mux2;
 
-  //rezultatul
-  always @(posedge clk or negedge rst) begin
-    if(!rst)
-        rez <= 16'b0;
-    else begin
-        if(c_add || c_sub)
-            rez <= {8'b0, add_sum};
+    // Mux 1: Alege intre Add/Sub si Multiplier
+    // Daca c_mult e 1, alege produsul, altfel alege suma
+    mux2_1 #(.w(16)) m1 (
+        .i0(mux_add_sub_val), 
+        .i1(mult_prod), 
+        .sel(c_mult), 
+        .out(out_mux1)
+    );
 
-        else if(c_mult)
-            rez <= mult_prod;
+    // Mux 2: Alege intre rezultatul anterior si Divider
+    // Daca c_div e 1, alege catul/restul, altfel ramane selectia anterioara
+    mux2_1 #(.w(16)) m2 (
+        .i0(out_mux1), 
+        .i1(mux_div_val), 
+        .sel(c_div), 
+        .out(out_mux2)
+    );
 
-        else if(c_div)
-            rez <= {r, q};
-    end
-  end
+    // --- 4. Registrul Final ---
+    // Determin?m când s? înc?rc?m rezultatul: oricare comand? e activ?
+    wire load_rez = c_add | c_sub | c_mult | c_div;
+    
+    // Folosim registrul pentru iesire
+    register #(.w(16)) reg_final (
+        .clk(clk), 
+        .load(load_rez), 
+        .d(out_mux2), 
+        .q(rez)
+    );
+
 endmodule
 
 module alu_tb;
@@ -157,6 +158,6 @@ module alu_tb;
     $display("x=%d y=%d | cat=%d, rest=%d", x, y, rez[7:0], rez[15:8]);
     c_div = 0;
     
-    $finish;
+    //$finish;
   end
 endmodule
