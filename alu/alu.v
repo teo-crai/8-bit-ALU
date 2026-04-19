@@ -16,17 +16,31 @@ module alu(
     wire start_mult = c_mult & ~c_mult_prev;
     wire start_div  = c_div  & ~c_div_prev;
     
+    wire load_cmd = c_add | c_sub | c_mult | c_div;
+    wire l_sub, l_mult, l_div;
+    
+    //instantiem DFF-urile cu MUX integrat direct la portul 'd'
+    //daca load_cmd e 1, 'd' primeste noua comanda. Daca nu, primeste vechea comanda ('l_')
+    dff_reset ff_lsub  (.clk(clk), .rst(rst), .d(load_cmd ? c_sub  : l_sub),  .q(l_sub));
+    dff_reset ff_lmult (.clk(clk), .rst(rst), .d(load_cmd ? c_mult : l_mult), .q(l_mult));
+    dff_reset ff_ldiv  (.clk(clk), .rst(rst), .d(load_cmd ? c_div  : l_div),  .q(l_div));
+    
+    //comanda activa acum, fara intarziere (folosita de tot ALU-ul)
+    wire act_sub  = load_cmd ? c_sub  : l_sub;
+    wire act_mult = load_cmd ? c_mult : l_mult;
+    wire act_div  = load_cmd ? c_div  : l_div;
+    
     wire busy_mult, busy_div;
-    assign ready = ~(busy_mult | busy_div); //e gata daca niciunul nu e ocupat
+    assign ready = ~((busy_mult & act_mult) | (busy_div & act_div)); //e gata daca niciunul nu e ocupat
 
     //instantiere unitati de calcul
     wire [7:0] add_sum;
     wire add_cout;
-    
-    //complementul de 2 pentru scadere (y xor c_sub)
-    wire [7:0] y_inv = y ^ {8{c_sub}};
 
-    rca #(.w(8)) add_inst(.a(x), .b(y_inv), .cin(c_sub), .sum(add_sum), .cout(add_cout));
+    //complementul de 2 pentru scadere (y xor c_sub)
+    wire [7:0] y_inv = y ^ {8{act_sub}};
+    
+    rca #(.w(8)) add_inst(.a(x), .b(y_inv), .cin(act_sub), .sum(add_sum), .cout(add_cout));
 
     wire [15:0] mult_prod;
     multiplier mult_inst(.a(x), 
@@ -58,7 +72,7 @@ module alu(
     mux2_1 #(.w(16)) m1(
         .i0(mux_add_sub_val), 
         .i1(mult_prod), 
-        .sel(c_mult), 
+        .sel(act_mult), 
         .out(out_mux1)
     );
 
@@ -67,7 +81,7 @@ module alu(
     mux2_1 #(.w(16)) m2(
         .i0(out_mux1), 
         .i1(mux_div_val), 
-        .sel(c_div), 
+        .sel(act_div), 
         .out(out_mux2)
     );
 
@@ -162,5 +176,6 @@ module alu_tb;
     end
 
 endmodule
+
 
 

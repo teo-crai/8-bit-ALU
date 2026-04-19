@@ -19,13 +19,16 @@ module fsm(
   reg [3:0]st_next; //urmatoarea stare
 
   //blocul secvential, memoria automatului
-  always @ (posedge clk, negedge rst) begin //actualizeaza starea pe fiecare front pozitiv de tact; reset asincron, activ pe 0
-    if(!rst) st<=ST_RST; 
-    else st<=st_next;
+  always @ (posedge clk, posedge rst) begin //actualizeaza starea pe fiecare front pozitiv de tact; reset asincron, activ pe 0
+    if(!rst)
+       st<=ST_RST; 
+    else 
+       st<=st_next;
    end
 
    //blocul combinational pentru tranzitii
    always @ (*) begin
+     st_next = st;
      case(st) //se stabileste urmatoare stare pentru fiecare posibilitate de stare curenta
       ST_RST: if(b) st_next=ST_BEGIN;
       ST_BEGIN: if(load) st_next=ST_LOAD;

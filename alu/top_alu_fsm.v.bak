@@ -61,7 +61,7 @@ module top_alu_fsm_tb;
         .op_code(op_code),
         .x(x),
         .y(y),
-        .rez(rez),
+        .rez(rez)
         .ready(ready),
         .div_zero_err(div_zero_err)
     );
