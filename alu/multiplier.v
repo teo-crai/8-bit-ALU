@@ -2,7 +2,7 @@ module multiplier(
   output [15:0]prod, //rezultatul final al produsului
   output flag_cnt, //semnaleaza starea modulului (1 = calcul in desfasurare; trece in 0 cand s-a obtinut rezultatul final)
   input [7:0]a, b, //numerele care se inmultesc
-  input clk, start //clk este pentru ciclul de tact si start este pentru a semnaliza inceperea inmutlirii, folosit pentru initializare
+  input clk, start, rst //clk este pentru ciclul de tact si start este pentru a semnaliza inceperea inmutlirii, folosit pentru initializare
   );
   
   wire [7:0]A, Q, M; 
@@ -45,7 +45,7 @@ module multiplier(
   register#(.w(8)) reg_Q(.clk(clk), .load(ld_en), .d(Q_in), .q(Q));
   register#(.w(1)) reg_Q1(.clk(clk), .load(ld_en), .d(Q_1_next), .q(Q_1));
   
-  counter_4bit cnt(.clk(clk), .start(start), .under_8(flag_cnt), .count(CNT));
+  counter_4bit cnt(.clk(clk), .start(start), .under_8(flag_cnt), .count(CNT), .rst(rst));
    
   wire done;
   assign done = (CNT == 4'd7); //activ doar cand am terminat cei 7 pasi

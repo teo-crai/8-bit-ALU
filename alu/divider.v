@@ -4,7 +4,7 @@ module divider(
   output [7:0]quotient, //cat
   output [7:0]remainder, //rest
   output flag_cnt, //semnaleaza starea modulului (1 = calcul in desfasurare; trece in 0 cand s-a obtinut rezultatul final)
-  input clk, start, //clk este pentru ciclul de tact si start este pentru a semnaliza inceperea impartirii, folosit pentru initializare
+  input clk, start, rst, //clk este pentru ciclul de tact si start este pentru a semnaliza inceperea impartirii, folosit pentru initializare
   output div_zero_err
   ); 
   
@@ -47,7 +47,7 @@ module divider(
   register#(.w(8)) reg_Q(.clk(clk), .load(ld_en), .d(Q_in), .q(Q));
   register#(.w(8)) reg_M(.clk(clk), .load(start), .d(divisor), .q(M)); //M se incarca doar la inceput pentru ca nu i se schimba valoarea
   
-  counter_4bit cnt(.clk(clk), .start(start), .under_8(flag_cnt), .count(CNT));
+  counter_4bit cnt(.clk(clk), .start(start), .under_8(flag_cnt), .count(CNT), .rst(rst));
   
   wire done;
   assign done = (CNT == 4'd7); //activ doar cand am terminat cei 7 pasi
