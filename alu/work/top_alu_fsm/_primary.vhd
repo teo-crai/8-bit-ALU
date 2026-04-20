@@ -1,18 +1,15 @@
 library verilog;
 use verilog.vl_types.all;
-entity alu is
+entity top_alu_fsm is
     port(
         clk             : in     vl_logic;
         rst             : in     vl_logic;
-        c_add           : in     vl_logic;
-        c_sub           : in     vl_logic;
-        c_mult          : in     vl_logic;
-        c_div           : in     vl_logic;
-        write_enable    : in     vl_logic;
+        b               : in     vl_logic;
+        e               : in     vl_logic;
+        load            : in     vl_logic;
+        op_code         : in     vl_logic_vector(1 downto 0);
         x               : in     vl_logic_vector(7 downto 0);
         y               : in     vl_logic_vector(7 downto 0);
-        flag_mult       : out    vl_logic;
-        flag_div        : out    vl_logic;
         rez             : out    vl_logic_vector(15 downto 0)
     );
-end alu;
+end top_alu_fsm;

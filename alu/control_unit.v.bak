@@ -1,47 +1,70 @@
 module fsm(
   input clk,rst,b,e,load, //b->begin, e->end
-  input op_code, //codul care indica ce operatie se doreste a fi efectuata
-  output reg c_add,c_sub,c_mult,c_div
+  input flag_mult, flag_div, //pentru a tine cont de nr de cicluri de care au nevoie impartirea/inmultirea sa se finalizeze
+  input [1:0]op_code, //codul care indica ce operatie se doreste a fi efectuata
+  output reg c_add,c_sub,c_mult,c_div,
+  output reg write_enable
   );
-  localparam ST_BEGIN=3'd0;
-  localparam ST_LOAD=3'd1;
-  localparam ST_DECODE=3'd2;
-  localparam ST_ADD=3'd3;
-  localparam ST_SUB=3'd4;
-  localparam ST_MULT=3'd5;
-  localparam ST_DIV=3'd6;
-  localparam ST_WRITE=3'd7;
-  localparam ST_END=3'd8;
-  localparam ST_RST=3'd9;
-  reg [2:0]st;
-  reg [2:0]st_next;
-  always @ (posedge clk, negedge rst)
-    if(!rst) st_next<=ST_RST;
+  //codificare pentru fiecare stare
+  localparam ST_BEGIN=4'd0; 
+  localparam ST_LOAD=4'd1; //se incarca datele in registru
+  localparam ST_DECODE=4'd2; //decodeaza operatia care trebuie efectuata
+  localparam ST_ADD=4'd3; //starea care indica ca se efectueaza operatia de adunare
+  localparam ST_SUB=4'd4; //starea care indica ca se efectueaza operatia de scadere
+  localparam ST_MULT=4'd5; //starea care indica ca se efectueaza operatia de inmultire
+  localparam ST_DIV=4'd6; //starea care indica ca se efectueaza operatia de impartire
+  localparam ST_WRITE=4'd7; //starea care indica ca se afiseaza rezultatele
+  localparam ST_END=4'd8; //starea finala
+  localparam ST_RST=4'd9; //starea de reset 
+  
+  reg [3:0]st; //starea curenta
+  reg [3:0]st_next; //urmatoarea stare
+
+  //blocul secvential, memoria automatului
+  always @ (posedge clk, negedge rst) begin //actualizeaza starea pe fiecare front pozitiv de tact; reset asincron, activ pe 0
+    if(!rst) st<=ST_RST; 
     else st<=st_next;
+   end
+
+   //blocul combinational pentru tranzitii
    always @ (*) begin
-     case(st) begin
-      ST_RST: if(b) st_next=ST_BEGIN;
-      ST_BEGIN: if(load) st_next=ST_LOAD;
-      ST_LOAD: st_next=ST_DECODE;
-      ST_DECODE: if(op_code==2'b00) st_next=ST_ADD;
-                    else if(op_code==2'b01)  st_next=ST_SUB;
-                    else if(op_code==2'b10) st_next=ST_MULT;
-                    else st_next=ST_DIV;
-      ST_ADD: st_next=ST_WRITE;
+     st_next = st; //initializare a starii urmatoare
+     write_enable=0;
+     case(st) //se stabileste urmatoare stare pentru fiecare posibilitate de stare curenta
+      ST_RST: if(b) st_next=ST_BEGIN; //din reset trecem in begin
+      ST_BEGIN: st_next=ST_LOAD; //din begin trecem in load
+      ST_LOAD: st_next=ST_DECODE; //din load trecem in decode, decodarea codului operatiei
+      ST_DECODE: if(op_code==2'b00) st_next=ST_ADD; //in functie de codul de intrare,
+                 else if(op_code==2'b01)  st_next=ST_SUB; //trecem in starea corespunzatoare operatiei
+                 else if(op_code==2'b10) st_next=ST_MULT;
+                 else st_next=ST_DIV;
+      ST_ADD: st_next=ST_WRITE; //din adunare/scadere trecem direct in write, scrierea in outbus
       ST_SUB: st_next=ST_WRITE;
-      ST_MULT: st_next=ST_WRITE;
-      ST_DIV: st_next=ST_WRITE;
-      ST_WRITE: if(rst) st_next=ST_RST;
-                else if(load) st_next=ST_LOAD;
-                else if(e) st_next=ST_END;
+      ST_MULT: begin
+              //c_mult=1;
+              if(!flag_mult) st_next=ST_WRITE; //la impartire/inmultire se asteapta semnalul 
+            end
+      ST_DIV: begin
+              //c_div=1;
+              if(!flag_div) st_next=ST_WRITE;//corespunzator finalizarii operatiei, deoarece e nevoie de 8 cicluri de tact
+            end
+      ST_WRITE: begin
+                write_enable = 1;
+                if(e) st_next=ST_END; //daca operatia s-a terminat cu succes, putem scrie rezultatul pe outbus
+                else if(load) st_next=ST_LOAD; //altfel preluam urmatoarele date de intrare
+              end
+      default: st_next=ST_RST;
     endcase
    end
-   always @ (*) begin 
+
+   //blocul combinational pentru iesiri
+  always @ (*) begin //genereaza semnale de control pe baza starii in care ne aflam
+     {c_add, c_sub, c_mult, c_div} = 4'b0000;
      case(st)
-       ST_ADD: {c_add,c_sub,c_mult,c_div}=4'b1000;
-       ST_SUB: {c_add,c_sub,c_mult,c_div}=4'b0100;
-       ST_MULT: {c_add,c_sub,c_mult,c_div}=4'b0010;
-       ST_DIV: {c_add,c_sub,c_mult,c_div}=4'b0001;
+       ST_ADD: {c_add,c_sub,c_mult,c_div}=4'b1000; //activeaza adunarea
+       ST_SUB: {c_add,c_sub,c_mult,c_div}=4'b0100; //activeaza scaderea
+       ST_MULT: {c_add,c_sub,c_mult,c_div}=4'b0010; //activeaza inmultirea
+       ST_DIV: {c_add,c_sub,c_mult,c_div}=4'b0001; //activeaza impartirea
      endcase
    end
  endmodule

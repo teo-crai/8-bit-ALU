@@ -9,7 +9,6 @@ module top_alu_fsm(
   // fire interne (legatura FSM -> ALU)
   wire c_add, c_sub, c_mult, c_div;
   wire flag_mult, flag_div;
-  wire write_enable;
 
   // instanta FSM
   fsm control_unit(
@@ -24,8 +23,7 @@ module top_alu_fsm(
     .c_mult(c_mult),
     .c_div(c_div),
     .flag_mult(flag_mult),
-    .flag_div(flag_div),
-    .write_enable(write_enable)
+    .flag_div(flag_div)
   );
 
   // instanta ALU
@@ -40,8 +38,7 @@ module top_alu_fsm(
     .y(y),
     .rez(rez),
     .flag_mult(flag_mult),
-    .flag_div(flag_div),
-    .write_enable(write_enable)
+    .flag_div(flag_div)
   );
 
 endmodule

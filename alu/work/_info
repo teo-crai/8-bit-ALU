@@ -4,33 +4,47 @@ K3
 cModel Technology
 Z0 dC:\Users\teocr\Desktop\Programare\CN\alu\alu
 valu
-!s100 3ih6Jh[Qb[Y<K5P_[EA@=1
-IfDc[Bf@@R@cGz4cUm?k7[0
-VQd^?_SlhDQel9cM<>Phn31
-Z1 w1775549903
+I>oN^2dOmme7eYTC^=2aQT3
+V8Q;086TRUEgB:2FHldl_F1
+Z1 w1776674906
 Z2 8alu.v
 Z3 Falu.v
 L0 1
 Z4 OV;L;6.5b;42
 r1
-!s85 0
 31
-!s101 -O0
 o-O0
+!s100 @:0d1ZcR7Wle8[6H0?0UU1
+!s85 0
+!s101 -O0
 valu_tb
-!s100 @j6VEGmV5GOce85=_0_3<0
-I^0^Yd;XD7nK9HW3P8Chd:2
+I1A<S]613nRNlV_NdD9?Sg2
 VL;=kgzZ7GJ2Reg7Z1GkmR2
 R1
 R2
 R3
-L0 66
+L0 91
 R4
 r1
-!s85 0
 31
-!s101 -O0
 o-O0
+!s100 8k:40]mi<7TU3]mGQ5OFM0
+!s85 0
+!s101 -O0
+vdff_reset
+I3dfmZ^kFZlX0Cbd>A?OLa2
+V4>gVZKMjQoRgAc=;L=_IY3
+w1776540566
+8dff_reset.v
+Fdff_reset.v
+L0 1
+R4
+r1
+31
+o-O0
+!s100 6V]aCZdc<gVNia00<hP5S3
+!s85 0
+!s101 -O0
 vdivider
 IkocXfi1oRMC:;?B2_h9h92
 VDCH>7cAofz8PSQ`_@X@cG2
@@ -60,9 +74,9 @@ o-O0
 !s85 0
 !s101 -O0
 vfsm
-IQdS5o0ZjAcA7NDNT9R6SY3
-VSFonBPbETjJmPcNbZ=Gi@0
-w1775550347
+INL51FAJQGTf4>D:46FAe:2
+VXK`ZB]D3zm<NfMc85>Gjg2
+w1776675535
 8control_unit.v
 Fcontrol_unit.v
 L0 1
@@ -70,7 +84,7 @@ R4
 r1
 31
 o-O0
-!s100 L`O0ekBe77l=>==VBS1mI3
+!s100 K=NmTeNlQdleg7a;nV@X[3
 !s85 0
 !s101 -O0
 vmultiplier
@@ -87,6 +101,20 @@ o-O0
 !s100 AjGMQJORd;YmXR`ngMN4X2
 !s85 0
 !s101 -O0
+vmux2_1
+IPnkaoF[]Da3GhHeDZoaI71
+V@VWK[:d>bGJDG7N]6h63g0
+w1776543523
+8mux2_1.v
+Fmux2_1.v
+L0 1
+R4
+r1
+31
+o-O0
+!s100 M5mM;nf^[6H9Pca9KgYO`3
+!s85 0
+!s101 -O0
 vrca
 IAe?J<c;ZO0j:HIJ[jP=n?2
 VOfggU<_[I0b1[h=`:T>>l0
@@ -101,6 +129,20 @@ o-O0
 !s100 2h>AS6533j:M:TlXCo5XE1
 !s85 0
 !s101 -O0
+vregister
+!s100 g@zP57fGkJA:OWNkSK?jZ0
+I:2GhBWIPUKVi9o9zb_3ZY1
+V5ch?POQILVUkQc2;5HI5Y3
+w1776673748
+8register.v
+Fregister.v
+L0 1
+R4
+r1
+!s85 0
+31
+!s101 -O0
+o-O0
 vtb_multiplier
 I8KOMIlK?zk=lg`W4n_cgD3
 VzjL;ioaV=?_4H6n?5lzoa2
@@ -113,5 +155,33 @@ r1
 31
 o-O0
 !s100 PKTRRClYoCTPmmI5nZIf>1
+!s85 0
+!s101 -O0
+vtop_alu_fsm
+IeCX@;_KIB`OR07zlZX8`^1
+VZINGe[WV1bIU[5kIcW8II0
+Z9 w1776675111
+Z10 8top_alu_fsm.v
+Z11 Ftop_alu_fsm.v
+L0 1
+R4
+r1
+31
+o-O0
+!s100 1HeG_ZBCgoOc=;O;f:Dh81
+!s85 0
+!s101 -O0
+vtop_alu_fsm_tb
+ISX`WTlmo6`oUUk5?RHmkZ3
+VXSeUZhR9cEig:KSi0T1I42
+R9
+R10
+R11
+L0 49
+R4
+r1
+31
+o-O0
+!s100 [TFL2=KP2OVi4^8XHG:<I0
 !s85 0
 !s101 -O0

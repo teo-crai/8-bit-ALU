@@ -1,7 +1,9 @@
 module fsm(
   input clk,rst,b,e,load, //b->begin, e->end
+  input flag_mult, flag_div, //pentru a tine cont de nr de cicluri de care au nevoie impartirea/inmultirea sa se finalizeze
   input [1:0]op_code, //codul care indica ce operatie se doreste a fi efectuata
-  output reg c_add,c_sub,c_mult,c_div
+  output reg c_add,c_sub,c_mult,c_div,
+  output reg write_enable
   );
   //codificare pentru fiecare stare
   localparam ST_BEGIN=4'd0; 
@@ -26,21 +28,31 @@ module fsm(
 
    //blocul combinational pentru tranzitii
    always @ (*) begin
+     st_next = st; //initializare a starii urmatoare
+     write_enable=0;
      case(st) //se stabileste urmatoare stare pentru fiecare posibilitate de stare curenta
-      ST_RST: if(b) st_next=ST_BEGIN;
-      ST_BEGIN: if(load) st_next=ST_LOAD;
-      ST_LOAD: st_next=ST_DECODE;
-      ST_DECODE: if(op_code==2'b00) st_next=ST_ADD;
-                 else if(op_code==2'b01)  st_next=ST_SUB;
+      ST_RST: if(b) st_next=ST_BEGIN; //din reset trecem in begin
+      ST_BEGIN: st_next=ST_LOAD; //din begin trecem in load
+      ST_LOAD: st_next=ST_DECODE; //din load trecem in decode, decodarea codului operatiei
+      ST_DECODE: if(op_code==2'b00) st_next=ST_ADD; //in functie de codul de intrare,
+                 else if(op_code==2'b01)  st_next=ST_SUB; //trecem in starea corespunzatoare operatiei
                  else if(op_code==2'b10) st_next=ST_MULT;
                  else st_next=ST_DIV;
-      ST_ADD: st_next=ST_WRITE;
+      ST_ADD: st_next=ST_WRITE; //din adunare/scadere trecem direct in write, scrierea in outbus
       ST_SUB: st_next=ST_WRITE;
-      ST_MULT: st_next=ST_WRITE;
-      ST_DIV: st_next=ST_WRITE;
-      ST_WRITE: if(rst) st_next=ST_RST;
-                else if(load) st_next=ST_LOAD;
-                else if(e) st_next=ST_END;
+      ST_MULT: begin
+              //c_mult=1;
+              if(!flag_mult) st_next=ST_WRITE; //la impartire/inmultire se asteapta semnalul 
+            end
+      ST_DIV: begin
+              //c_div=1;
+              if(!flag_div) st_next=ST_WRITE;//corespunzator finalizarii operatiei, deoarece e nevoie de 8 cicluri de tact
+            end
+      ST_WRITE: begin
+                write_enable = 1;
+                if(e) st_next=ST_END; //daca operatia s-a terminat cu succes, putem scrie rezultatul pe outbus
+                //else if(load) st_next=ST_LOAD; //altfel preluam urmatoarele date de intrare
+              end
       default: st_next=ST_RST;
     endcase
    end
