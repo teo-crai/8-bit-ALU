@@ -4,32 +4,35 @@ module alu(
     input [7:0] x, y,
     output [15:0] rez,
     output ready, //pt a vedea cand s-a terminat procesul
-    output div_zero_err
+    output div_zero_err //in cazul in care se imparte cu 0
 );
 
     //detectie front
     wire c_mult_prev, c_div_prev;
 
+    //memoram starea comenzilor din ciclul de tact anterior 
     dff_reset ff_mult(.clk(clk), .rst(rst), .d(c_mult), .q(c_mult_prev));
     dff_reset ff_div(.clk(clk), .rst(rst), .d(c_div),  .q(c_div_prev));
 
+    //semnale pentru cand incepe inmultirea/impartirea; trebuie sa astepte sa se termine cea de dinainte
     wire start_mult = c_mult & ~c_mult_prev;
     wire start_div  = c_div  & ~c_div_prev;
     
-    wire load_cmd = c_add | c_sub | c_mult | c_div;
+    wire load_cmd = c_add | c_sub | c_mult | c_div; //decide daca trebuie sa transmita o comanda
     wire l_sub, l_mult, l_div;
     
-    //instantiem DFF-urile cu MUX integrat direct la portul 'd'
-    //daca load_cmd e 1, 'd' primeste noua comanda. Daca nu, primeste vechea comanda ('l_')
+    //instantiem DFF-urile cu mux integrat direct la portul 'd'
+    //daca load_cmd e 1, 'd' primeste noua comanda; daca nu, primeste vechea comanda ('l_')
     dff_reset ff_lsub  (.clk(clk), .rst(rst), .d(load_cmd ? c_sub  : l_sub),  .q(l_sub));
     dff_reset ff_lmult (.clk(clk), .rst(rst), .d(load_cmd ? c_mult : l_mult), .q(l_mult));
     dff_reset ff_ldiv  (.clk(clk), .rst(rst), .d(load_cmd ? c_div  : l_div),  .q(l_div));
     
-    //comanda activa acum, fara intarziere (folosita de tot ALU-ul)
+    //comanda activa acum, fara intarziere 
     wire act_sub  = load_cmd ? c_sub  : l_sub;
     wire act_mult = load_cmd ? c_mult : l_mult;
     wire act_div  = load_cmd ? c_div  : l_div;
     
+    //alu e ready doar cand nu avem opeartii active
     wire busy_mult, busy_div;
     assign ready = ~((busy_mult & act_mult) | (busy_div & act_div)); //e gata daca niciunul nu e ocupat
 
@@ -38,10 +41,17 @@ module alu(
     wire add_cout;
 
     //complementul de 2 pentru scadere (y xor c_sub)
+    //A - B = A + (~B) + 1
     wire [7:0] y_inv = y ^ {8{act_sub}};
     
-    rca #(.w(8)) add_inst(.a(x), .b(y_inv), .cin(c_sub), .sum(add_sum), .cout(add_cout));
+    //instantiere modul de adunare/scadere
+    rca #(.w(8)) add_inst(.a(x), 
+                          .b(y_inv), 
+                          .cin(c_sub), 
+                          .sum(add_sum), 
+                          .cout(add_cout));
 
+    //instantiere modul de inmultire
     wire [15:0] mult_prod;
     multiplier mult_inst(.a(x), 
                          .b(y), 
@@ -51,6 +61,7 @@ module alu(
                          .flag_cnt(busy_mult), 
                          .rst(rst));
 
+    //instantiere modul de impartire
     wire [7:0] q, r;
     divider div_inst(.clk(clk), 
                      .start(start_div), 
@@ -85,7 +96,7 @@ module alu(
         .out(out_mux2)
     );
 
-    assign rez = c_div  ? mux_div_val : c_mult ? mult_prod : mux_add_sub_val;
+    assign rez = c_div ? mux_div_val : c_mult ? mult_prod : mux_add_sub_val;
     
 endmodule
 

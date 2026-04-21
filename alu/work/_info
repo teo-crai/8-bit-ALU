@@ -4,11 +4,11 @@ K3
 cModel Technology
 Z0 dC:\Users\teocr\Desktop\Programare\CN\alu\alu
 valu
-!s100 E9zGK:jmfCLTIQGNdOU=o1
-IZUe3]gZGJRa=gE9[KRZKK0
+!s100 ]lm@TR757]HN9k1hNPNUK1
+Ij^WkT3me1IWf9n@YfX;=W1
 V^Ql^KCgZ5GHcFlVf4b44;1
 Z1 dC:\Users\MARIA\Documents\Facultate\AC\modelsim\win32aloem\alu\8-bit-ALU\alu
-Z2 w1776781220
+Z2 w1776791802
 Z3 8C:/Users/MARIA/Documents/Facultate/AC/modelsim/win32aloem/alu/8-bit-ALU/alu/alu.v
 Z4 FC:/Users/MARIA/Documents/Facultate/AC/modelsim/win32aloem/alu/8-bit-ALU/alu/alu.v
 L0 1
@@ -19,14 +19,14 @@ r1
 !s101 -O0
 Z6 o-work work -O0
 valu_tb
-!s100 FD]eKgIinHW8o^hEM_jET2
-INW5?VHYS1K`OYfb<`Vc@l1
+!s100 j8E?=][7OR6A>of?ozcO^1
+IA?<n=jgjF=aMe@:D>G4oJ1
 VL;=kgzZ7GJ2Reg7Z1GkmR2
 R1
 R2
 R3
 R4
-L0 92
+L0 100
 R5
 r1
 !s85 0
@@ -53,7 +53,7 @@ vdff_reset
 IaoBBFz>R`B^M`H1_l<CiV2
 V4>gVZKMjQoRgAc=;L=_IY3
 R1
-w1776624791
+w1776787860
 8C:/Users/MARIA/Documents/Facultate/AC/modelsim/win32aloem/alu/8-bit-ALU/alu/dff_reset.v
 FC:/Users/MARIA/Documents/Facultate/AC/modelsim/win32aloem/alu/8-bit-ALU/alu/dff_reset.v
 L0 1
@@ -113,7 +113,7 @@ vfsm
 Iz>mPUT3jjkcdlN`58WXTT1
 V1bC^bojGMXcKZ`RDhYP[f2
 R1
-w1776786062
+w1776792039
 8C:/Users/MARIA/Documents/Facultate/AC/modelsim/win32aloem/alu/8-bit-ALU/alu/control_unit.v
 FC:/Users/MARIA/Documents/Facultate/AC/modelsim/win32aloem/alu/8-bit-ALU/alu/control_unit.v
 L0 1
@@ -213,11 +213,11 @@ o-O0
 !s85 0
 !s101 -O0
 vtop_alu_fsm
-!s100 :@J>ToXYn:k<L6aBhM^d<2
-IA@CCe6I6989e79j8lPi;R3
+!s100 0m5EdbDO3;J8i5B`KE6Xk1
+IDOekJ?7c;7Qa9HaGSf5[H2
 VBAo6aCQ93CT]a?jkjoY??0
 R1
-Z10 w1776786283
+Z10 w1776792036
 Z11 8C:/Users/MARIA/Documents/Facultate/AC/modelsim/win32aloem/alu/8-bit-ALU/alu/top_alu_fsm.v
 Z12 FC:/Users/MARIA/Documents/Facultate/AC/modelsim/win32aloem/alu/8-bit-ALU/alu/top_alu_fsm.v
 L0 1
@@ -228,14 +228,14 @@ r1
 !s101 -O0
 R6
 vtop_alu_fsm_tb
-!s100 HdXkoXlQZf2n`1n1YRW7K0
-IB>[G_4S`4A@j=OA?eWJfL2
+!s100 W3Sa@>UV@WJzh2@W=h>`j2
+IE]@Ao?ai^kO^iNEZz=[0V3
 VXSeUZhR9cEig:KSi0T1I42
 R1
 R10
 R11
 R12
-L0 60
+L0 61
 R5
 r1
 !s85 0

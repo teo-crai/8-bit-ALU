@@ -32,7 +32,7 @@ module fsm(
   always @(posedge clk or posedge rst) begin
     if (rst) 
       wait_cnt <= 0;
-    else if (st == ST_DECODE) begin
+    else if (st == ST_DECODE) begin  
           if (op_latched == 2'b10 || op_latched == 2'b11) 
               wait_cnt <= 8; //setam asteptarea la 8 cicluri
           else 
