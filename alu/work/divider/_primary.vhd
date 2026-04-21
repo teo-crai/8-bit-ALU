@@ -8,6 +8,8 @@ entity divider is
         remainder       : out    vl_logic_vector(7 downto 0);
         flag_cnt        : out    vl_logic;
         clk             : in     vl_logic;
-        start           : in     vl_logic
+        start           : in     vl_logic;
+        rst             : in     vl_logic;
+        div_zero_err    : out    vl_logic
     );
 end divider;

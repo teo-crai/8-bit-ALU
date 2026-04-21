@@ -1,63 +1,92 @@
 module alu(
     input clk, rst,
-    input c_add, c_sub, c_mult, c_div,
+    input c_add, c_sub, c_mult, c_div, //selecteaza operatia
     input [7:0] x, y,
     output [15:0] rez,
-    output ready, 
+    output ready, //pt a vedea cand s-a terminat procesul
     output div_zero_err
 );
 
-    // --- 1. Detectie Front (Neschimbat) ---
+    //detectie front
     wire c_mult_prev, c_div_prev;
+
     dff_reset ff_mult(.clk(clk), .rst(rst), .d(c_mult), .q(c_mult_prev));
-    dff_reset ff_div (.clk(clk), .rst(rst), .d(c_div),  .q(c_div_prev));
+    dff_reset ff_div(.clk(clk), .rst(rst), .d(c_div),  .q(c_div_prev));
 
     wire start_mult = c_mult & ~c_mult_prev;
     wire start_div  = c_div  & ~c_div_prev;
-
-    // --- 2. Registru de Comand? (PUR STRUCTURAL) ---
-    wire [3:0] cmd_in = {c_add, c_sub, c_mult, c_div};
-    wire [3:0] cmd_latched;
-    wire load_cmd = (cmd_in != 4'b0000); // Înc?rc?m doar când FSM trimite ceva valid
-
-    register #(.w(4)) reg_cmd (
-        .clk(clk), .load(load_cmd), .d(cmd_in), .q(cmd_latched)
-    );
-
-    wire l_sub  = cmd_latched[2]; 
-    wire l_mult = cmd_latched[1]; 
-    wire l_div  = cmd_latched[0]; 
-
-    // --- 3. Generare READY ---
+    
+    wire load_cmd = c_add | c_sub | c_mult | c_div;
+    wire l_sub, l_mult, l_div;
+    
+    //instantiem DFF-urile cu MUX integrat direct la portul 'd'
+    //daca load_cmd e 1, 'd' primeste noua comanda. Daca nu, primeste vechea comanda ('l_')
+    dff_reset ff_lsub  (.clk(clk), .rst(rst), .d(load_cmd ? c_sub  : l_sub),  .q(l_sub));
+    dff_reset ff_lmult (.clk(clk), .rst(rst), .d(load_cmd ? c_mult : l_mult), .q(l_mult));
+    dff_reset ff_ldiv  (.clk(clk), .rst(rst), .d(load_cmd ? c_div  : l_div),  .q(l_div));
+    
+    //comanda activa acum, fara intarziere (folosita de tot ALU-ul)
+    wire act_sub  = load_cmd ? c_sub  : l_sub;
+    wire act_mult = load_cmd ? c_mult : l_mult;
+    wire act_div  = load_cmd ? c_div  : l_div;
+    
     wire busy_mult, busy_div;
-    // ALU este "busy" doar dac? modulul ruleaz? ?I a fost efectiv selectat
-    assign ready = ~((busy_mult & l_mult) | (busy_div & l_div));
+    assign ready = ~((busy_mult & act_mult) | (busy_div & act_div)); //e gata daca niciunul nu e ocupat
 
-    // --- 4. Unit??i de Calcul ---
+    //instantiere unitati de calcul
     wire [7:0] add_sum;
     wire add_cout;
+
+    //complementul de 2 pentru scadere (y xor c_sub)
+    wire [7:0] y_inv = y ^ {8{act_sub}};
     
-    wire [7:0] y_inv = y ^ {8{l_sub}};
-    rca #(.w(8)) add_inst(.a(x), .b(y_inv), .cin(l_sub), .sum(add_sum), .cout(add_cout));
+    rca #(.w(8)) add_inst(.a(x), .b(y_inv), .cin(c_sub), .sum(add_sum), .cout(add_cout));
 
     wire [15:0] mult_prod;
-    multiplier mult_inst(
-        .a(x), .b(y), .clk(clk), .rst(rst), 
-        .start(start_mult), .prod(mult_prod), .flag_cnt(busy_mult)
-    );
+    multiplier mult_inst(.a(x), 
+                         .b(y), 
+                         .clk(clk), 
+                         .start(start_mult), 
+                         .prod(mult_prod), 
+                         .flag_cnt(busy_mult), 
+                         .rst(rst));
 
     wire [7:0] q, r;
-    divider div_inst(
-        .clk(clk), .rst(rst), .start(start_div), 
-        .dividend({8'b0, x}), .divisor(y), .quotient(q), .remainder(r), 
-        .flag_cnt(busy_div), .div_zero_err(div_zero_err)
+    divider div_inst(.clk(clk), 
+                     .start(start_div), 
+                     .dividend({8'b0, x}), 
+                     .divisor(y), .quotient(q), 
+                     .remainder(r), .flag_cnt(busy_div), 
+                     .div_zero_err(div_zero_err), 
+                     .rst(rst));
+
+    //logica de selectie
+    wire [15:0] mux_add_sub_val = {8'b0, add_sum};
+    wire [15:0] mux_div_val = {r, q};
+    
+    wire [15:0] out_mux1;
+    wire [15:0] out_mux2;
+
+    //mux-ul 1 alege intre add/sub si multiplier
+    //daca c_mult e 1, alege produsul, altfel alege suma
+    mux2_1 #(.w(16)) m1(
+        .i0(mux_add_sub_val), 
+        .i1(mult_prod), 
+        .sel(act_mult), 
+        .out(out_mux1)
     );
 
-    // --- 5. Selectie Iesire (Mux-uri) ---
-    wire [15:0] out_mux1;
-    mux2_1 #(.w(16)) m1 (.i0({8'b0, add_sum}), .i1(mult_prod), .sel(l_mult), .out(out_mux1));
-    mux2_1 #(.w(16)) m2 (.i0(out_mux1), .i1({r, q}), .sel(l_div), .out(rez)); // Legat direct la rez
+    //mux-ul 2 alege intre rezultatul anterior si divider
+    //daca c_div e 1, alege catul/restul, altfel ramane selectia anterioara
+    mux2_1 #(.w(16)) m2(
+        .i0(out_mux1), 
+        .i1(mux_div_val), 
+        .sel(act_div), 
+        .out(out_mux2)
+    );
 
+    assign rez = c_div  ? mux_div_val : c_mult ? mult_prod : mux_add_sub_val;
+    
 endmodule
 
 module alu_tb;
@@ -147,6 +176,3 @@ module alu_tb;
     end
 
 endmodule
-
-
-

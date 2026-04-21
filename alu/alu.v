@@ -40,7 +40,7 @@ module alu(
     //complementul de 2 pentru scadere (y xor c_sub)
     wire [7:0] y_inv = y ^ {8{act_sub}};
     
-    rca #(.w(8)) add_inst(.a(x), .b(y_inv), .cin(act_sub), .sum(add_sum), .cout(add_cout));
+    rca #(.w(8)) add_inst(.a(x), .b(y_inv), .cin(c_sub), .sum(add_sum), .cout(add_cout));
 
     wire [15:0] mult_prod;
     multiplier mult_inst(.a(x), 
@@ -85,7 +85,7 @@ module alu(
         .out(out_mux2)
     );
 
-    assign rez = out_mux2;
+    assign rez = c_div ? mux_div_val : c_mult ? mult_prod : mux_add_sub_val;
     
 endmodule
 
@@ -176,6 +176,3 @@ module alu_tb;
     end
 
 endmodule
-
-
-

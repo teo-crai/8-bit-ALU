@@ -3,6 +3,7 @@ module divider_tb;
   reg [7:0] b;
   reg clk;
   reg start;
+  reg rst;
   
   wire [7:0]q;
   wire [7:0]r;
@@ -17,7 +18,8 @@ module divider_tb;
     .flag_cnt(flag_cnt), 
     .clk(clk), 
     .start(start),
-    .div_zero_err(div_zero_err)
+    .div_zero_err(div_zero_err),
+    .rst(rst)
   );
 
   always #5 clk = ~clk;

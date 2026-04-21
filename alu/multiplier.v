@@ -36,21 +36,21 @@ module multiplier(
   mux2_1#(.w(1)) mux_Q1(.i0(Q1_shifted), .i1(1'b0), .sel(start), .out(Q_1_next));
   
   //registrul M se incarca doar la start
-  register#(.w(8)) reg_M(.clk(clk), .load(start), .d(a), .q(M));
+  register#(.w(8)) reg_M(.clk(clk), .load(start), .d(a), .q(M), .rst(rst));
   
   wire ld_en = start | flag_cnt;
   
   //registrele se incarca la start sau in timpul calculului
-  register#(.w(8)) reg_A(.clk(clk), .load(ld_en), .d(A_in), .q(A));
-  register#(.w(8)) reg_Q(.clk(clk), .load(ld_en), .d(Q_in), .q(Q));
-  register#(.w(1)) reg_Q1(.clk(clk), .load(ld_en), .d(Q_1_next), .q(Q_1));
+  register#(.w(8)) reg_A(.clk(clk), .rst(rst), .load(ld_en), .d(A_in), .q(A));
+  register#(.w(8)) reg_Q(.clk(clk), .rst(rst), .load(ld_en), .d(Q_in), .q(Q));
+  register#(.w(1)) reg_Q1(.clk(clk), .rst(rst), .load(ld_en), .d(Q_1_next), .q(Q_1));
   
   counter_4bit cnt(.clk(clk), .start(start), .under_8(flag_cnt), .count(CNT), .rst(rst));
    
   wire done;
   assign done = (CNT == 4'd7); //activ doar cand am terminat cei 7 pasi
 
-  register#(.w(16)) res_latch (.clk(clk), .load(done), .d({A_in, Q_in}), .q(prod));
+  register#(.w(16)) res_latch (.clk(clk), .load(done), .d({A_in, Q_in}), .q(prod), .rst(rst));
   //produsul final se afla prin concatenarea lui A si Q
   //se încarca doar când done == 1
   

@@ -3,6 +3,7 @@ module multiplier_tb;
   reg [7:0] b;
   reg clk;
   reg start;
+  reg rst;
   
   wire [15:0] prod;
   wire flag_cnt;
@@ -13,7 +14,8 @@ module multiplier_tb;
     .a(a), 
     .b(b), 
     .clk(clk), 
-    .start(start)
+    .start(start),
+    .rst(rst)
   );
 
   always #5 clk = ~clk;

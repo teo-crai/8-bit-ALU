@@ -4,7 +4,7 @@ module divider(
   output [7:0]quotient, //cat
   output [7:0]remainder, //rest
   output flag_cnt, //semnaleaza starea modulului (1 = calcul in desfasurare; trece in 0 cand s-a obtinut rezultatul final)
-  input clk, start, rst //clk este pentru ciclul de tact si start este pentru a semnaliza inceperea impartirii, folosit pentru initializare
+  input clk, start, rst, //clk este pentru ciclul de tact si start este pentru a semnaliza inceperea impartirii, folosit pentru initializare
   output div_zero_err
   ); 
   
@@ -43,17 +43,17 @@ module divider(
   wire ld_en = start | flag_cnt;
     
   //registrele se incarca la start sau in timpul calculului 
-  register#(.w(8)) reg_A(.clk(clk), .load(ld_en), .d(A_in), .q(A));
-  register#(.w(8)) reg_Q(.clk(clk), .load(ld_en), .d(Q_in), .q(Q));
-  register#(.w(8)) reg_M(.clk(clk), .load(start), .d(divisor), .q(M)); //M se incarca doar la inceput pentru ca nu i se schimba valoarea
+  register#(.w(8)) reg_A(.clk(clk), .load(ld_en), .rst(rst), .d(A_in), .q(A));
+  register#(.w(8)) reg_Q(.clk(clk), .load(ld_en), .rst(rst), .d(Q_in), .q(Q));
+  register#(.w(8)) reg_M(.clk(clk), .load(start), .rst(rst), .d(divisor), .q(M)); //M se incarca doar la inceput pentru ca nu i se schimba valoarea
   
   counter_4bit cnt(.clk(clk), .start(start), .under_8(flag_cnt), .count(CNT), .rst(rst));
   
   wire done;
   assign done = (CNT == 4'd7); //activ doar cand am terminat cei 7 pasi
 
-  register#(.w(8)) res_latch_q (.clk(clk), .load(done | div_zero_err), .d(Q_in), .q(quotient));
-  register#(.w(8)) res_latch_r (.clk(clk), .load(done | div_zero_err), .d(A_in), .q(remainder));
+  register#(.w(8)) res_latch_q (.clk(clk), .load(done | div_zero_err), .d(Q_in), .q(quotient), .rst(rst));
+  register#(.w(8)) res_latch_r (.clk(clk), .load(done | div_zero_err), .d(A_in), .q(remainder), .rst(rst));
   //produsul final se afla prin concatenarea lui A si Q
   //se încarca doar când done == 1
 

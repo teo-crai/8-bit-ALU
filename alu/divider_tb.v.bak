@@ -36,7 +36,7 @@ module divider_tb;
       #2; 
       
       if (div_zero_err)
-        $display("ERROR: Division with 0 detected %d / %d !", val_a, val_b);
+        $display("ERROR: Division with 0 detected: %d / %d !", val_a, val_b);
       else
         $display("Result: %d / %d = %d remainder %d", val_a, val_b, q, r);
       

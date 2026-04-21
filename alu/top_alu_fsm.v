@@ -1,15 +1,15 @@
 module top_alu_fsm(
-  input clk, rst,
-  input b, e, load,
-  input [1:0] op_code,
-  input [7:0] x, y,
-  output [15:0] rez,
-  output ready,
-  output div_zero_err
+  input clk, rst, //semnale de tact si reset
+  input b, e, load, //begin -> operatia poate incepe; end -> operatia s-a terminat cu succes; load -> se incarca urmatorul set de intrari
+  input [1:0] op_code, //codul care va fi decodat pentru a indica operatia dorita
+  input [7:0] x, y,  //operanzii
+  output [15:0] rez //rezultatul
 );
 
   // fire interne (legatura FSM -> ALU)
   wire c_add, c_sub, c_mult, c_div;
+  wire flag_mult, flag_div;
+  wire write_enable;
 
   // instanta FSM
   fsm control_unit(
@@ -22,7 +22,10 @@ module top_alu_fsm(
     .c_add(c_add),
     .c_sub(c_sub),
     .c_mult(c_mult),
-    .c_div(c_div)
+    .c_div(c_div),
+    .flag_mult(flag_mult),
+    .flag_div(flag_div),
+    .write_enable(write_enable)
   );
 
   // instanta ALU
@@ -36,124 +39,144 @@ module top_alu_fsm(
     .x(x),
     .y(y),
     .rez(rez),
-    .ready(ready),
-    .div_zero_err(div_zero_err)
+    .flag_mult(flag_mult),
+    .flag_div(flag_div),
+    .write_enable(write_enable)
   );
 
 endmodule
 
 module top_alu_fsm_tb;
 
-    reg clk, rst;
-    reg b, e, load;
-    reg [1:0] op_code;
-    reg [7:0] x, y;
-    wire [15:0] rez;
-    wire ready;
-    wire div_zero_err;
+  reg clk, rst;
+  reg b, e, load;
+  reg [1:0] op_code;
+  reg [7:0] x, y;
+  wire [15:0] rez;
 
-    top_alu_fsm dut(
-        .clk(clk),
-        .rst(rst),
-        .b(b),
-        .e(e),
-        .load(load),
-        .op_code(op_code),
-        .x(x),
-        .y(y),
-        .rez(rez),
-        .ready(ready),
-        .div_zero_err(div_zero_err)
-    );
+  // DUT
+  top_alu_fsm dut(
+    .clk(clk),
+    .rst(rst),
+    .b(b),
+    .e(e),
+    .load(load),
+    .op_code(op_code),
+    .x(x),
+    .y(y),
+    .rez(rez)
+  );
 
-    //clk: perioada 10 ns
-    always #5 clk = ~clk;
+  // clock
+  always #5 clk = ~clk;
 
-    task execute_op(input [1:0] op, input [7:0] val_x, input [7:0] val_y);
-        begin
-            @(negedge clk);
-            x = val_x;
-            y = val_y;
-            op_code = op;
-            
-            //fsm-ul asteapta semnmalul load pentru a incepe operatia
-            load = 1; 
-            @(negedge clk); 
-            load = 0; //il tinem activ doar un tact
-            
-            repeat(4) @(posedge clk);
-            
-            //asteptam ca alu sa proceseze datele
-            if (op >= 2'b10) begin
-                @(posedge clk);
-                wait(ready == 1); 
-                @(negedge clk); 
-            end else begin
-                @(negedge clk); //add si sub dureaza doar un tact
-            end
-                
-            //afisare
-            case(op)
-                2'b00: $display("%d + %d = %d", val_x, val_y, rez);
-                2'b01: $display("%d - %d = %d", val_x, val_y, rez);
-                2'b10: $display("%d * %d = %d", $signed(val_x), $signed(val_y), $signed(rez));
-                2'b11: begin
-                       if (div_zero_err) 
-                          $display("ERROR: Division with 0 detected: %d / %d !", val_x, val_y);
-                       else 
-                        $display("%d / %d = %d remainder %d", val_x, val_y, rez[7:0], rez[15:8]);
-                       end
-                default: $display("Operation not supported");            
-            endcase
-            
-            #15; //pauza intre comenzi
-        end
-    endtask
+  // =========================
+  // TASK GENERAL PENTRU OPERATII
+  // =========================
+  task run_operation;
+    input [1:0] op;
+    input [7:0] a, b_in;
+    integer cycles;
+    begin
+      // seteaza nr cicluri
+      case(op)
+        2'b00, 2'b01: cycles = 1;  // ADD, SUB
+        2'b10, 2'b11: cycles = 8;  // MULT, DIV
+      endcase
 
-    initial begin
-        //initializare semnale
-        clk = 0;
-        rst = 0;
-        op_code = 0;
-        load = 0;
-        b = 0;
-        e = 0;
-        x = 0;
-        y = 0;
-        
-        //reset hardware
-        rst = 0; #10; 
-        rst = 1; #20; 
-        rst = 0; #20;
+      // load date
+      @(posedge clk);
+      load = 1;
+      x = a;
+      y = b_in;
+      op_code = op;
 
-        //start fsm
-        @(negedge clk);
-        b = 1;
-        @(negedge clk);
-        b = 0;
+      @(posedge clk);
+      load = 0;
 
-        #30;
-        
-        $display("--Testing--");
+      // start operatie
+      @(posedge clk);
+      b = 1;
 
-        //executia Operatiilor (op_code: 00=ADD, 01=SUB, 10=MULT, 11=DIV)
-        execute_op(2'b00, 10, 5);      // Add: 10 + 5
-        execute_op(2'b01, 20, 7);      // Sub: 20 - 7
-        execute_op(2'b10, 6, 4);       // Mult: 6 * 4
-        execute_op(2'b11, 40, 6);      // Div: 40 / 6
-        execute_op(2'b10, -8'd5, 8'd3); // Mult: -5 * 3 (Testare Booth)
-        execute_op(2'b11, 25, 0);       // Div: Impartire la Zero
+      @(posedge clk);
+      b = 0;
 
-        $display("--Done--");
+      // asteapta executia
+      repeat(cycles-1) @(posedge clk);
 
-        //stop fsm
-        @(negedge clk);
-        e = 1;
-        @(negedge clk);
-        e = 0;
-        
-        #20;
-        $finish;
+      // semnal END (exact ultimul ciclu)
+      e = 1;
+      @(posedge clk);
+      e = 0;
+
+      // afisare rezultat
+      case(op)
+        2'b00:
+          $display("ADD: %0d + %0d = %0d", a, b_in, rez);
+        2'b01:
+          $display("SUB: %0d - %0d = %0d", a, b_in, rez);
+        2'b10:
+          $display("MULT: %0d * %0d = %0d", a, b_in, rez);
+        2'b11:
+          $display("DIV: %0d / %0d = cat=%0d rest=%0d",
+                    a, b_in, rez[7:0], rez[15:8]);
+      endcase
+
+      // pauza intre operatii
+      repeat(2) @(posedge clk);
     end
+  endtask
+
+  // =========================
+  // INITIAL
+  // =========================
+  initial begin
+    $display("===== TEST COMPLET FSM + ALU =====");
+
+    clk = 0;
+    rst = 0;
+    b = 0;
+    e = 0;
+    load = 0;
+    op_code = 0;
+    x = 0;
+    y = 0;
+
+    // reset
+    #20 rst = 1;
+
+    // =========================
+    // TESTE ADD
+    // =========================
+    run_operation(2'b00, 10, 5);
+    run_operation(2'b00, 0, 0);        // limita
+    run_operation(2'b00, 255, 1);      // overflow
+
+    // =========================
+    // TESTE SUB
+    // =========================
+    run_operation(2'b01, 20, 7);
+    run_operation(2'b01, 5, 10);       // negativ (underflow)
+    run_operation(2'b01, 0, 0);
+
+    // =========================
+    // TESTE MULT
+    // =========================
+    run_operation(2'b10, 6, 4);
+    run_operation(2'b10, 0, 123);      // zero
+    run_operation(2'b10, 255, 2);      // mare
+
+    // =========================
+    // TESTE DIV
+    // =========================
+    run_operation(2'b11, 40, 6);
+    run_operation(2'b11, 100, 10);
+    run_operation(2'b11, 5, 1);
+    run_operation(2'b11, 5, 0);        // div by zero (important!)
+
+    // =========================
+    $display("===== END TEST =====");
+    $stop;
+  end
 
 endmodule

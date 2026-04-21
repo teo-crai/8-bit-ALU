@@ -10,6 +10,8 @@ entity alu is
         c_div           : in     vl_logic;
         x               : in     vl_logic_vector(7 downto 0);
         y               : in     vl_logic_vector(7 downto 0);
-        rez             : out    vl_logic_vector(15 downto 0)
+        rez             : out    vl_logic_vector(15 downto 0);
+        ready           : out    vl_logic;
+        div_zero_err    : out    vl_logic
     );
 end alu;

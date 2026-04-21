@@ -4,114 +4,241 @@ K3
 cModel Technology
 Z0 dC:\Users\teocr\Desktop\Programare\CN\alu\alu
 valu
-!s100 3ih6Jh[Qb[Y<K5P_[EA@=1
-IfDc[Bf@@R@cGz4cUm?k7[0
-VQd^?_SlhDQel9cM<>Phn31
-Z1 w1775549903
-Z2 8alu.v
-Z3 Falu.v
+!s100 E9zGK:jmfCLTIQGNdOU=o1
+IZUe3]gZGJRa=gE9[KRZKK0
+V^Ql^KCgZ5GHcFlVf4b44;1
+Z1 dC:\Users\MARIA\Documents\Facultate\AC\modelsim\win32aloem\alu\8-bit-ALU\alu
+Z2 w1776781220
+Z3 8C:/Users/MARIA/Documents/Facultate/AC/modelsim/win32aloem/alu/8-bit-ALU/alu/alu.v
+Z4 FC:/Users/MARIA/Documents/Facultate/AC/modelsim/win32aloem/alu/8-bit-ALU/alu/alu.v
 L0 1
-Z4 OV;L;6.5b;42
+Z5 OV;L;6.5b;42
 r1
 !s85 0
 31
 !s101 -O0
-o-O0
+Z6 o-work work -O0
 valu_tb
-!s100 @j6VEGmV5GOce85=_0_3<0
-I^0^Yd;XD7nK9HW3P8Chd:2
+!s100 FD]eKgIinHW8o^hEM_jET2
+INW5?VHYS1K`OYfb<`Vc@l1
 VL;=kgzZ7GJ2Reg7Z1GkmR2
 R1
 R2
 R3
-L0 66
 R4
-r1
-!s85 0
-31
-!s101 -O0
-o-O0
-vdivider
-IkocXfi1oRMC:;?B2_h9h92
-VDCH>7cAofz8PSQ`_@X@cG2
-Z5 w1775499373
-8divider.v
-Fdivider.v
-L0 1
-R4
-r1
-31
-o-O0
-!s100 M3f]JAEhW6C5:IO3;6dk;1
-!s85 0
-!s101 -O0
-vfac
-I7ReSoaI21WfDn:lj^Wz@V3
-VXo5dkd6<LICdLo3Qck<9j0
-Z6 w1775550164
-Z7 8rca.v
-Z8 Frca.v
-L0 1
-R4
-r1
-31
-o-O0
-!s100 @efRid=U3_m;FF718TCZc3
-!s85 0
-!s101 -O0
-vfsm
-IQdS5o0ZjAcA7NDNT9R6SY3
-VSFonBPbETjJmPcNbZ=Gi@0
-w1775550347
-8control_unit.v
-Fcontrol_unit.v
-L0 1
-R4
-r1
-31
-o-O0
-!s100 L`O0ekBe77l=>==VBS1mI3
-!s85 0
-!s101 -O0
-vmultiplier
-I:Ef5bcb2kR>VmkLM_Jz6j0
-VE7a1?[kX76n;h<TP?jS<O1
+L0 92
 R5
-8multiplier.v
-Fmultiplier.v
-L0 1
-R4
 r1
-31
-o-O0
-!s100 AjGMQJORd;YmXR`ngMN4X2
 !s85 0
+31
 !s101 -O0
-vrca
-IAe?J<c;ZO0j:HIJ[jP=n?2
-VOfggU<_[I0b1[h=`:T>>l0
 R6
+vcounter_4bit
+!s100 ^dh:>i3QE^fZ;i5gDVO>U0
+I5bGP54MEYTH8:NB5j`O=F2
+V=ST49fQ8bBB=9dKYHB?[13
+R1
+w1776625034
+8C:/Users/MARIA/Documents/Facultate/AC/modelsim/win32aloem/alu/8-bit-ALU/alu/counter_4bit.v
+FC:/Users/MARIA/Documents/Facultate/AC/modelsim/win32aloem/alu/8-bit-ALU/alu/counter_4bit.v
+L0 1
+R5
+r1
+!s85 0
+31
+!s101 -O0
+R6
+vdff_reset
+!s100 CXXV:PShWk2^D[QdhmQlz2
+IaoBBFz>R`B^M`H1_l<CiV2
+V4>gVZKMjQoRgAc=;L=_IY3
+R1
+w1776624791
+8C:/Users/MARIA/Documents/Facultate/AC/modelsim/win32aloem/alu/8-bit-ALU/alu/dff_reset.v
+FC:/Users/MARIA/Documents/Facultate/AC/modelsim/win32aloem/alu/8-bit-ALU/alu/dff_reset.v
+L0 1
+R5
+r1
+!s85 0
+31
+!s101 -O0
+R6
+vdivider
+!s100 V]Og[AY;Cg[kV]31B8^`H1
+I2:akDhM1BU<IL080ajOCG3
+Vg_42BMTbcMel34Zkh1VD@2
+R1
+w1776780645
+8C:/Users/MARIA/Documents/Facultate/AC/modelsim/win32aloem/alu/8-bit-ALU/alu/divider.v
+FC:/Users/MARIA/Documents/Facultate/AC/modelsim/win32aloem/alu/8-bit-ALU/alu/divider.v
+L0 1
+R5
+r1
+!s85 0
+31
+!s101 -O0
+R6
+vdivider_tb
+!s100 2gK``:QiTI2JC6bcA?X863
+IZOlUo;U0CNnnUDRdTTCL60
+V[eF[fCz0oYA2k0AN`mUUS3
+R1
+w1776780692
+8C:/Users/MARIA/Documents/Facultate/AC/modelsim/win32aloem/alu/8-bit-ALU/alu/divider_tb.v
+FC:/Users/MARIA/Documents/Facultate/AC/modelsim/win32aloem/alu/8-bit-ALU/alu/divider_tb.v
+L0 1
+R5
+r1
+!s85 0
+31
+!s101 -O0
+R6
+vfac
+!s100 HCTeE[T^;AbV@I]8m`<ll1
+IidCbzk?YdX`@SgX2f[g4d2
+VXo5dkd6<LICdLo3Qck<9j0
+R1
+Z7 w1776431561
+Z8 8C:/Users/MARIA/Documents/Facultate/AC/modelsim/win32aloem/alu/8-bit-ALU/alu/rca.v
+Z9 FC:/Users/MARIA/Documents/Facultate/AC/modelsim/win32aloem/alu/8-bit-ALU/alu/rca.v
+L0 1
+R5
+r1
+!s85 0
+31
+!s101 -O0
+R6
+vfsm
+!s100 K=NmTeNlQdleg7a;nV@X[3
+Ie1ilN>6NcZMIPoAbnS@682
+VXK`ZB]D3zm<NfMc85>Gjg2
+R1
+w1776780204
+8C:/Users/MARIA/Documents/Facultate/AC/modelsim/win32aloem/alu/8-bit-ALU/alu/control_unit.v
+FC:/Users/MARIA/Documents/Facultate/AC/modelsim/win32aloem/alu/8-bit-ALU/alu/control_unit.v
+L0 1
+R5
+r1
+!s85 0
+31
+!s101 -O0
+R6
+vmultiplier
+!s100 Ra>BEfeQ1_fekZ``QJSe:3
+IgnlmAdhHUmh?Tj;aQn]NP1
+VUo08_]gITA`D?WVnFgWLG2
+R1
+w1776780735
+8C:/Users/MARIA/Documents/Facultate/AC/modelsim/win32aloem/alu/8-bit-ALU/alu/multiplier.v
+FC:/Users/MARIA/Documents/Facultate/AC/modelsim/win32aloem/alu/8-bit-ALU/alu/multiplier.v
+L0 1
+R5
+r1
+!s85 0
+31
+!s101 -O0
+R6
+vmultiplier_tb
+!s100 i9MJHCQFC_2]`<BbC5iJc2
+IZUoBGmDQe;kY_dEN?1X=M3
+V?HfT_VY_KlHCLX`cEj:3C1
+R1
+w1776780663
+8C:/Users/MARIA/Documents/Facultate/AC/modelsim/win32aloem/alu/8-bit-ALU/alu/multiplier_tb.v
+FC:/Users/MARIA/Documents/Facultate/AC/modelsim/win32aloem/alu/8-bit-ALU/alu/multiplier_tb.v
+L0 1
+R5
+r1
+!s85 0
+31
+!s101 -O0
+R6
+vmux2_1
+!s100 M5mM;nf^[6H9Pca9KgYO`3
+Ic1l5iQ;jS2nk78z=`42^T3
+V@VWK[:d>bGJDG7N]6h63g0
+R1
+w1776439290
+8C:/Users/MARIA/Documents/Facultate/AC/modelsim/win32aloem/alu/8-bit-ALU/alu/mux2_1.v
+FC:/Users/MARIA/Documents/Facultate/AC/modelsim/win32aloem/alu/8-bit-ALU/alu/mux2_1.v
+L0 1
+R5
+r1
+!s85 0
+31
+!s101 -O0
+R6
+vrca
+!s100 V^BGTX9NVC]`VZPLWLNaz1
+I@756>>P>Vf[Si=kBSCb]13
+VOfggU<_[I0b1[h=`:T>>l0
+R1
 R7
 R8
-L0 9
-R4
+R9
+L0 10
+R5
 r1
-31
-o-O0
-!s100 2h>AS6533j:M:TlXCo5XE1
 !s85 0
+31
 !s101 -O0
+R6
+vregister
+!s100 ;zi9ICzFYXGYXnOE0:8RB2
+IXJeIK^MT_HLlDV2FVzNj[0
+V5ch?POQILVUkQc2;5HI5Y3
+R1
+w1776781149
+8C:/Users/MARIA/Documents/Facultate/AC/modelsim/win32aloem/alu/8-bit-ALU/alu/register.v
+FC:/Users/MARIA/Documents/Facultate/AC/modelsim/win32aloem/alu/8-bit-ALU/alu/register.v
+L0 1
+R5
+r1
+!s85 0
+31
+!s101 -O0
+R6
 vtb_multiplier
 I8KOMIlK?zk=lg`W4n_cgD3
 VzjL;ioaV=?_4H6n?5lzoa2
-R5
+w1775499373
 8multiplier_tb.v
 Fmultiplier_tb.v
 L0 1
-R4
+R5
 r1
 31
 o-O0
 !s100 PKTRRClYoCTPmmI5nZIf>1
 !s85 0
 !s101 -O0
+vtop_alu_fsm
+!s100 1HeG_ZBCgoOc=;O;f:Dh81
+IK86gc8zJRd8?Y?9IC[mRX2
+VZINGe[WV1bIU[5kIcW8II0
+R1
+Z10 w1776780266
+Z11 8C:/Users/MARIA/Documents/Facultate/AC/modelsim/win32aloem/alu/8-bit-ALU/alu/top_alu_fsm.v
+Z12 FC:/Users/MARIA/Documents/Facultate/AC/modelsim/win32aloem/alu/8-bit-ALU/alu/top_alu_fsm.v
+L0 1
+R5
+r1
+!s85 0
+31
+!s101 -O0
+R6
+vtop_alu_fsm_tb
+!s100 [TFL2=KP2OVi4^8XHG:<I0
+I3WSOCTaZ<H=81niR6^0I42
+VXSeUZhR9cEig:KSi0T1I42
+R1
+R10
+R11
+R12
+L0 49
+R5
+r1
+!s85 0
+31
+!s101 -O0
+R6
