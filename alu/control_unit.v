@@ -1,8 +1,8 @@
 module fsm(
   input clk,rst,b,e,load, //b->begin, e->end
   input [1:0]op_code, //codul care indica ce operatie se doreste a fi efectuata
-  output reg c_add, c_sub, c_mult, c_div,
-  output reg write_enable
+  output reg c_add, c_sub, c_mult, c_div, //semnale de control activate pe baza codului de operatie
+  output reg write_enable //semnal de control activat cand datele sunt pregatite pentru a fi transmise catre iesire
   );
   
   //codificare pentru fiecare stare
@@ -26,13 +26,13 @@ module fsm(
         if (rst) 
           op_latched <= 2'b00;
         else if (st == ST_LOAD) 
-          op_latched <= op_code;
-  end
+          op_latched <= op_code;  //logica secventiala pentru registrul codului de operatie, astfel nu se pierde informatia
+  end					//la fiecare ciclu
     
   always @(posedge clk or posedge rst) begin
     if (rst) 
       wait_cnt <= 0;
-    else if (st == ST_DECODE) begin  
+    else if (st == ST_DECODE) begin
           if (op_latched == 2'b10 || op_latched == 2'b11) 
               wait_cnt <= 8; //setam asteptarea la 8 cicluri
           else 
@@ -60,27 +60,27 @@ module fsm(
       ST_LOAD: st_next=ST_DECODE; //din load trecem in decode, decodarea codului operatiei
       ST_DECODE:case(op_latched)
                     2'b00: st_next = ST_ADD;
-                    2'b01: st_next = ST_SUB;
+                    2'b01: st_next = ST_SUB;  //in functie de codul curent al operatiei, se trece in starea corespunzatoare
                     2'b10: st_next = ST_MULT;
                     2'b11: st_next = ST_DIV;
                  endcase
       ST_ADD: st_next=ST_WRITE; //din adunare/scadere trecem direct in write, scrierea in outbus
       ST_SUB: st_next=ST_WRITE;
-      ST_MULT:   if(wait_cnt == 0) st_next = ST_WRITE; 
-      ST_DIV:    if(wait_cnt == 0) st_next = ST_WRITE;
-      ST_WRITE:  if(e) st_next = ST_END;
-      ST_END:    st_next = ST_RST;
+      ST_MULT:   if(wait_cnt == 0) st_next = ST_WRITE; //din inmultire/impartire trecem in write abia dupa cele 8 cicluri
+      ST_DIV:    if(wait_cnt == 0) st_next = ST_WRITE; //necesare completarii operatiilor
+      ST_WRITE:  if(e) st_next = ST_END; //trecem in starea de final
+      ST_END:    st_next = ST_RST; //revenim in starea de reset pentru a incepe un nou ciclu
       default: st_next=ST_RST;
     endcase
    end
 
    //blocul combinational pentru iesiri
   always @(*) begin
-        {c_add, c_sub, c_mult, c_div} = 4'b0000;
+        {c_add, c_sub, c_mult, c_div} = 4'b0000; //initializare
         write_enable = 0;
         case(st)
-            ST_ADD:   c_add  = 1;
-            ST_SUB:   c_sub  = 1;
+            ST_ADD:   c_add  = 1;  //fiecare semnal se activeaza
+            ST_SUB:   c_sub  = 1;  //cand se afla in starea corespunzatoare operatiei
             ST_MULT:  c_mult = 1;
             ST_DIV:   c_div  = 1;
             ST_WRITE: begin
@@ -88,7 +88,7 @@ module fsm(
                 // Mentinem semnalul activ pentru ca ALU MUX sa ramana pe pozitia corecta
                 case(op_latched)
                     2'b00: c_add  = 1;
-                    2'b01: c_sub  = 1;
+                    2'b01: c_sub  = 1;  //semnalele trebuie sa ramana active pe toata perioada efectuarii operatiei
                     2'b10: c_mult = 1;
                     2'b11: c_div  = 1;
                 endcase
