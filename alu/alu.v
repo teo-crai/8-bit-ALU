@@ -1,171 +1,182 @@
 module alu(
     input clk, rst,
-    input c_add, c_sub, c_mult, c_div,
-    input write_enable,
+    input c_add, c_sub, c_mult, c_div, //selecteaza operatia
     input [7:0] x, y,
-    output flag_mult, flag_div,
-    output [15:0] rez
+    output [15:0] rez,
+    output ready, //pt a vedea cand s-a terminat procesul
+    output div_zero_err
 );
 
-    // --- 1. Detectie front---
+    //detectie front
     wire c_mult_prev, c_div_prev;
 
-    dff_reset ff_mult (.clk(clk), .rst(rst), .d(c_mult), .q(c_mult_prev));
-    dff_reset ff_div  (.clk(clk), .rst(rst), .d(c_div),  .q(c_div_prev));
+    dff_reset ff_mult(.clk(clk), .rst(rst), .d(c_mult), .q(c_mult_prev));
+    dff_reset ff_div(.clk(clk), .rst(rst), .d(c_div),  .q(c_div_prev));
 
     wire start_mult = c_mult & ~c_mult_prev;
     wire start_div  = c_div  & ~c_div_prev;
+    
+    wire load_cmd = c_add | c_sub | c_mult | c_div;
+    wire l_sub, l_mult, l_div;
+    
+    //instantiem DFF-urile cu MUX integrat direct la portul 'd'
+    //daca load_cmd e 1, 'd' primeste noua comanda. Daca nu, primeste vechea comanda ('l_')
+    dff_reset ff_lsub  (.clk(clk), .rst(rst), .d(load_cmd ? c_sub  : l_sub),  .q(l_sub));
+    dff_reset ff_lmult (.clk(clk), .rst(rst), .d(load_cmd ? c_mult : l_mult), .q(l_mult));
+    dff_reset ff_ldiv  (.clk(clk), .rst(rst), .d(load_cmd ? c_div  : l_div),  .q(l_div));
+    
+    //comanda activa acum, fara intarziere (folosita de tot ALU-ul)
+    wire act_sub  = load_cmd ? c_sub  : l_sub;
+    wire act_mult = load_cmd ? c_mult : l_mult;
+    wire act_div  = load_cmd ? c_div  : l_div;
+    
+    wire busy_mult, busy_div;
+    assign ready = ~((busy_mult & act_mult) | (busy_div & act_div)); //e gata daca niciunul nu e ocupat
 
-    // --- 2. Instantiere Unitati de Calcul ---
+    //instantiere unitati de calcul
     wire [7:0] add_sum;
     wire add_cout;
-    
-    //complementul de 2 pentru scadere (Y xor c_sub)
-    wire [7:0] y_inv = y ^ {8{c_sub}};
 
-    rca #(.w(8)) add_inst(
-        .a(x),
-        .b(y_inv),
-        .cin(c_sub), 
-        .sum(add_sum),
-        .cout(add_cout)
-    );
+    //complementul de 2 pentru scadere (y xor c_sub)
+    wire [7:0] y_inv = y ^ {8{act_sub}};
+    
+    rca #(.w(8)) add_inst(.a(x), .b(y_inv), .cin(act_sub), .sum(add_sum), .cout(add_cout));
 
     wire [15:0] mult_prod;
-    multiplier mult_inst(
-        .a(x), .b(y), .clk(clk), .start(start_mult),
-        .prod(mult_prod), .flag_cnt(flag_mult) // flag_cnt nefolosit aici
-    );
+    multiplier mult_inst(.a(x), 
+                         .b(y), 
+                         .clk(clk), 
+                         .start(start_mult), 
+                         .prod(mult_prod), 
+                         .flag_cnt(busy_mult), 
+                         .rst(rst));
 
     wire [7:0] q, r;
-    divider div_inst(
-        .clk(clk), .start(start_div),
-        .dividend({8'b0, x}), .divisor(y),
-        .quotient(q), .remainder(r), .flag_cnt(flag_div)
-    );
+    divider div_inst(.clk(clk), 
+                     .start(start_div), 
+                     .dividend({8'b0, x}), 
+                     .divisor(y), .quotient(q), 
+                     .remainder(r), .flag_cnt(busy_div), 
+                     .div_zero_err(div_zero_err), 
+                     .rst(rst));
 
-    // --- 3. Logica de Selectie ---
+    //logica de selectie
     wire [15:0] mux_add_sub_val = {8'b0, add_sum};
     wire [15:0] mux_div_val = {r, q};
     
     wire [15:0] out_mux1;
     wire [15:0] out_mux2;
 
-    // Mux 1: Alege intre Add/Sub si Multiplier
-    // Daca c_mult e 1, alege produsul, altfel alege suma
-    mux2_1 #(.w(16)) m1 (
+    //mux-ul 1 alege intre add/sub si multiplier
+    //daca c_mult e 1, alege produsul, altfel alege suma
+    mux2_1 #(.w(16)) m1(
         .i0(mux_add_sub_val), 
         .i1(mult_prod), 
-        .sel(c_mult), 
+        .sel(act_mult), 
         .out(out_mux1)
     );
 
-    // Mux 2: Alege intre rezultatul anterior si Divider
-    // Daca c_div e 1, alege catul/restul, altfel ramane selectia anterioara
-    mux2_1 #(.w(16)) m2 (
+    //mux-ul 2 alege intre rezultatul anterior si divider
+    //daca c_div e 1, alege catul/restul, altfel ramane selectia anterioara
+    mux2_1 #(.w(16)) m2(
         .i0(out_mux1), 
         .i1(mux_div_val), 
-        .sel(c_div), 
+        .sel(act_div), 
         .out(out_mux2)
     );
 
-    // --- 4. Registrul Final ---
-    /*wire load_rez =
-    c_add |
-    c_sub |
-    (c_mult & ~flag_mult) |
-    (c_div  & ~flag_div);*/
-    wire load_rez = write_enable; //rezultatul se incarca in functie de semnalul determinat de control unit
+    assign rez = out_mux2;
     
-    // Folosim registrul pentru iesire
-    register #(.w(16)) reg_final (
-        .clk(clk),
-        .rst(rst),
-        .load(load_rez), 
-        .d(out_mux2), 
-        .q(rez)
-    );
-
 endmodule
 
 module alu_tb;
-  reg clk, rst;
-  reg c_add, c_sub, c_mult, c_div;
-  reg [7:0] x, y;
-  wire [15:0] rez;
+    reg clk, rst;
+    reg c_add, c_sub, c_mult, c_div;
+    reg [7:0] x, y;
+    wire [15:0] rez;
+    wire ready;
+    wire div_zero_err;
+    
+    alu uut (.clk(clk), .rst(rst), .c_add(c_add), .c_sub(c_sub), .c_mult(c_mult), .c_div(c_div), .x(x), .y(y), .rez(rez), .ready(ready), .div_zero_err(div_zero_err));
+    
+    always #5 clk = ~clk;
 
-  // Instantierea ALU
-  alu cut (
-    .clk(clk), .rst(rst),
-    .c_add(c_add), .c_sub(c_sub), .c_mult(c_mult), .c_div(c_div),
-    .x(x), .y(y), .rez(rez)
-  );
+    //op: 0 = add, 1 = sub, 2 = mult, 3 = div
+    task execute_alu(input [1:0] op, input [7:0] val_x, input [7:0] val_y);
+        begin
+            @(negedge clk);
+            x = val_x;
+            y = val_y;
+            
+            //activam doar semnalul corespunzator
+            case(op)
+                2'b00: c_add  = 1;
+                2'b01: c_sub  = 1;
+                2'b10: c_mult = 1;
+                2'b11: c_div  = 1;
+            endcase
 
-  // Ceas de 10ns (frecventa 100MHz)
-  always #5 clk = ~clk;
+            @(negedge clk); //asteptam un tact pentru ca alu sa detecteze frontul/load
+            
+            if (op >= 2'b10) begin//daca e inmultire sau impartire asteptam mai mult sa se termine 
+                @(posedge clk);
+                wait(ready == 1);
+                @(negedge clk);
+            end
+            else begin
+                @(negedge clk); //add si sub sunt instantanee
+            end
 
-  // Task pentru executia operatiilor
-  task execute_op(input [2:0] type, input [7:0] val_x, input [7:0] val_y);
-    begin
-      // 1. Preg?tim datele pe frontul negativ
-      @(negedge clk);
-      x = val_x;
-      y = val_y;
-      
-      // 2. Activ?m comanda (Puls de START)
-      case(type)
-        1: c_add  = 1;
-        2: c_sub  = 1;
-        3: c_mult = 1;
-        4: c_div  = 1;
-      endcase
+            //afisare
+            case(op)
+                2'b00: $display("%d + %d = %d", val_x, val_y, rez);
+                2'b01:  $display("%d - %d = %d", val_x, val_y, rez);
+                2'b10: $display("%d * %d = %d", $signed(val_x), $signed(val_y), $signed(rez));
+                2'b11:  begin
+                        if (div_zero_err)
+                          $display("ERROR: Division with 0 detected: %d / %d !", val_x, val_y);
+                        else
+                          $display("%d / %d = %d remainder %d", val_x, val_y, rez[7:0], rez[15:8]);
+                        end
+                default: $display("Operation not supported");
+            endcase
 
-      // 3. ?inem comanda activ? un ciclu de ceas complet
-      @(posedge clk); 
-      #2; // Mic delay dup? frontul pozitiv
+            //resetare semnale de control
+            {c_add, c_sub, c_mult, c_div} = 4'b0000;
+            
+            @(negedge clk); //buffer intre operatii
+        end
+    endtask
 
-      // 4. Dezactiv?m comanda
-      @(negedge clk);
-      {c_add, c_sub, c_mult, c_div} = 4'b0000;
-
-      // 5. A?tept?m mult mai mult (ex: 15 cicluri) pentru a l?sa 
-      // algoritmul s? termine ?i s? transfere datele în registrul de ie?ire
-      repeat (15) @(posedge clk);
-      
-      #2; // Sincronizare final? pentru afi?are
-
-      if (type == 4)
-        $display("[TIME: %0t] DIV: %d / %d = Cat: %0d, Rest: %0d", $time, val_x, val_y, rez[7:0], rez[15:8]);
-      else
-        $display("[TIME: %0t] OP:%0d: %d si %d | Rezultat = %0d", $time, type, val_x, val_y, rez);
+    initial begin
+        //initializare
+        clk = 0; 
+        rst = 0;
+        {c_add, c_sub, c_mult, c_div} = 4'b0000;
+        x = 0; 
+        y = 0;
         
-      // 6. Mai a?tept?m pu?in între teste s? se cure?e magistralele
-      repeat (2) @(posedge clk);
+        //reset hardware
+        rst = 1;
+        #20 
+        rst = 0;
+        #20 
+
+        $display("--Testing--");
+
+        execute_alu(2'b00, 10, 5);  // Add: 10 + 5
+        execute_alu(2'b01, 20, 7);  // Sub: 20 - 7
+        execute_alu(2'b10, 6, 4);   // Mult: 6 * 4
+        execute_alu(2'b11, 40, 6);  // Div: 40 / 6
+        execute_alu(2'b10, -8'd5, 8'd3); //Mult: -5 * 3
+        execute_alu(2'b11, 25, 0); //Div cu 0
+        
+        $display("--Done--");
+        $finish;
     end
-  endtask
-
-  initial begin
-    // Initializare
-    clk = 0;
-    rst = 0;
-    {c_add, c_sub, c_mult, c_div} = 0;
-    x = 0; y = 0;
-
-    // Secventa de Reset
-    #15 rst = 1; 
-    #10;
-
-    $display("--- Start Testbench (8 Cicluri/Op) ---");
-
-    // Teste
-    execute_op(1, 8'd10, 8'd5);   // Adunare (de obicei e instanta, dar task-ul asteapta 8 cic)
-    execute_op(3, 8'd6,  8'd4);   // Inmultire (8 cicluri)
-    execute_op(3, 8'd12, 8'd10);  // Inmultire (8 cicluri)
-    execute_op(4, 8'd40, 8'd6);   // Impartire (8 cicluri)
-    execute_op(4, 8'd255, 8'd5);  // Impartire (8 cicluri)
-
-    $display("--- Testbench Finalizat ---");
-    $stop; 
-  end
 
 endmodule
+
+
+
+
