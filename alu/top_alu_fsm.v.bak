@@ -3,13 +3,19 @@ module top_alu_fsm(
   input b, e, load, //begin -> operatia poate incepe; end -> operatia s-a terminat cu succes; load -> se incarca urmatorul set de intrari
   input [1:0] op_code, //codul care va fi decodat pentru a indica operatia dorita
   input [7:0] x, y,  //operanzii
-  output [15:0] rez //rezultatul
+  output [15:0] rez, //rezultatul
+  output div_zero_err
 );
 
   // fire interne (legatura FSM -> ALU)
   wire c_add, c_sub, c_mult, c_div;
-  wire flag_mult, flag_div;
   wire write_enable;
+  
+  wire [15:0] alu_rez_intern; // Fir temporar pentru ce calculeaza ALU
+  
+  wire [7:0] x_reg, y_reg;
+  register #(.w(8)) rx(.clk(clk), .load(load), .rst(rst), .d(x), .q(x_reg));
+  register #(.w(8)) ry(.clk(clk), .load(load), .rst(rst), .d(y), .q(y_reg));
 
   // instanta FSM
   fsm control_unit(
@@ -23,8 +29,6 @@ module top_alu_fsm(
     .c_sub(c_sub),
     .c_mult(c_mult),
     .c_div(c_div),
-    .flag_mult(flag_mult),
-    .flag_div(flag_div),
     .write_enable(write_enable)
   );
 
@@ -36,12 +40,19 @@ module top_alu_fsm(
     .c_sub(c_sub),
     .c_mult(c_mult),
     .c_div(c_div),
-    .x(x),
-    .y(y),
-    .rez(rez),
-    .flag_mult(flag_mult),
-    .flag_div(flag_div),
-    .write_enable(write_enable)
+    .x(x_reg),
+    .y(y_reg),
+    .rez(alu_rez_intern),
+    .ready(),
+    .div_zero_err(div_zero_err)
+  );
+  
+  register #(.w(16)) reg_iesire(
+    .clk(clk),
+    .load(write_enable),
+    .rst(rst),
+    .d(alu_rez_intern),
+    .q(rez)
   );
 
 endmodule
@@ -52,6 +63,8 @@ module top_alu_fsm_tb;
   reg b, e, load;
   reg [1:0] op_code;
   reg [7:0] x, y;
+  
+  wire div_zero_err;
   wire [15:0] rez;
 
   // DUT
@@ -64,7 +77,8 @@ module top_alu_fsm_tb;
     .op_code(op_code),
     .x(x),
     .y(y),
-    .rez(rez)
+    .rez(rez),
+    .div_zero_err(div_zero_err)
   );
 
   // clock
@@ -73,43 +87,37 @@ module top_alu_fsm_tb;
   // =========================
   // TASK GENERAL PENTRU OPERATII
   // =========================
+  // =========================
+  // TASK GENERAL PENTRU OPERATII
+  // =========================
   task run_operation;
     input [1:0] op;
     input [7:0] a, b_in;
-    integer cycles;
     begin
-      // seteaza nr cicluri
-      case(op)
-        2'b00, 2'b01: cycles = 1;  // ADD, SUB
-        2'b10, 2'b11: cycles = 8;  // MULT, DIV
-      endcase
-
-      // load date
-      @(posedge clk);
+      // 1. Incarcam datele pe NEGEDGE (evita race conditions)
+      @(negedge clk);
       load = 1;
       x = a;
       y = b_in;
       op_code = op;
 
-      @(posedge clk);
+      @(negedge clk);
       load = 0;
 
-      // start operatie
-      @(posedge clk);
+      // 2. Dam impulsul de START pe NEGEDGE
+      @(negedge clk);
       b = 1;
-
-      @(posedge clk);
+      @(negedge clk);
       b = 0;
-
-      // asteapta executia
-      repeat(cycles-1) @(posedge clk);
-
-      // semnal END (exact ultimul ciclu)
-      e = 1;
+      
+      // 3. Asteptam ca FSM sa ajunga la ST_WRITE (starea 7)
+      wait (dut.control_unit.st == 4'd7);
+      
+      // Un mic buffer pentru a ne asigura ca datele au ajuns pe iesire
       @(posedge clk);
-      e = 0;
-
-      // afisare rezultat
+      @(negedge clk);
+      
+      // 4. Afisare rezultat
       case(op)
         2'b00:
           $display("ADD: %0d + %0d = %0d", a, b_in, rez);
@@ -118,12 +126,16 @@ module top_alu_fsm_tb;
         2'b10:
           $display("MULT: %0d * %0d = %0d", a, b_in, rez);
         2'b11:
-          $display("DIV: %0d / %0d = cat=%0d rest=%0d",
-                    a, b_in, rez[7:0], rez[15:8]);
+          if (div_zero_err)
+             $display("DIV: %0d / %0d = ERROR DIV BY ZERO", a, b_in);
+          else
+             $display("DIV: %0d / %0d = cat=%0d rest=%0d", a, b_in, rez[7:0], rez[15:8]);
       endcase
-
-      // pauza intre operatii
-      repeat(2) @(posedge clk);
+      
+      @(negedge clk);
+      e = 1;
+      @(negedge clk);
+      e = 0;
     end
   endtask
 
@@ -134,7 +146,7 @@ module top_alu_fsm_tb;
     $display("===== TEST COMPLET FSM + ALU =====");
 
     clk = 0;
-    rst = 0;
+    rst = 1;
     b = 0;
     e = 0;
     load = 0;
@@ -143,7 +155,7 @@ module top_alu_fsm_tb;
     y = 0;
 
     // reset
-    #20 rst = 1;
+    #20 rst = 0;
 
     // =========================
     // TESTE ADD

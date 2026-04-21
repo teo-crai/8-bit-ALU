@@ -63,7 +63,7 @@ module divider_tb;
     execute_division(16'd2056, 8'd0); 
 
     $display("--Done--");
-    $finish;
+    $stop;
   end
   
 endmodule   

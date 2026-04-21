@@ -1,72 +1,242 @@
 module fsm(
-    input clk, rst, b, e, load,
-    input flag_mult, flag_div,
-    input [1:0] op_code,
-    output reg c_add, c_sub, c_mult, c_div,
-    output reg write_enable
-);
-    localparam ST_RST       = 4'd0;
-    localparam ST_LOAD      = 4'd1;
-    localparam ST_DECODE    = 4'd2;
-    localparam ST_ADD       = 4'd3;
-    localparam ST_SUB       = 4'd4;
-    localparam ST_MULT      = 4'd5;
-    localparam ST_MULT_WAIT = 4'd9;
-    localparam ST_DIV       = 4'd6;
-    localparam ST_DIV_WAIT  = 4'd10;
-    localparam ST_WRITE     = 4'd7;
-    localparam ST_END       = 4'd8;
+  input clk,rst,b,e,load, //b->begin, e->end
+  input [1:0]op_code, //codul care indica ce operatie se doreste a fi efectuata
+  output reg c_add, c_sub, c_mult, c_div,
+  output reg write_enable
+  );
+  
+  //codificare pentru fiecare stare
+  localparam ST_BEGIN=4'd0; 
+  localparam ST_LOAD=4'd1; //se incarca datele in registru
+  localparam ST_DECODE=4'd2; //decodeaza operatia care trebuie efectuata
+  localparam ST_ADD=4'd3; //starea care indica ca se efectueaza operatia de adunare
+  localparam ST_SUB=4'd4; //starea care indica ca se efectueaza operatia de scadere
+  localparam ST_MULT=4'd5; //starea care indica ca se efectueaza operatia de inmultire
+  localparam ST_DIV=4'd6; //starea care indica ca se efectueaza operatia de impartire
+  localparam ST_WRITE=4'd7; //starea care indica ca se afiseaza rezultatele
+  localparam ST_END=4'd8; //starea finala
+  localparam ST_RST=4'd9; //starea de reset 
+  
+  reg [3:0]st; //starea curenta
+  reg [3:0]st_next; //urmatoarea stare
+  reg [1:0] op_latched; //pentru a memora operatia si a mentine semnalele active in starea de scriere
+  reg [3:0] wait_cnt; //contor pentru operatiile lungi
 
-    reg [3:0] st, st_next;
-    reg [1:0] op_latched;
+  always @(posedge clk or negedge rst) begin
+        if (rst) 
+          op_latched <= 2'b00;
+        else if (st == ST_LOAD) 
+          op_latched <= op_code;
+  end
+    
+  always @(posedge clk or posedge rst) begin
+    if (rst) 
+      wait_cnt <= 0;
+    else if (st == ST_DECODE) begin
+          if (op_latched == 2'b10 || op_latched == 2'b11) 
+              wait_cnt <= 8; //setam asteptarea la 8 cicluri
+          else 
+              wait_cnt <= 0;
+      end
+      else if (wait_cnt > 0) 
+        wait_cnt <= wait_cnt - 1;
+  end
+    
+  //blocul secvential, memoria automatului
+  always @ (posedge clk or posedge rst) begin //actualizeaza starea pe fiecare front pozitiv de tact; reset asincron, activ pe 0
+    if(rst) 
+      st<=ST_RST; 
+    else 
+      st<=st_next;
+   end
 
-    always @(posedge clk or posedge rst) begin
-        if (rst) op_latched <= 2'b00;
-        else if (load) op_latched <= op_code;
-    end
+   //blocul combinational pentru tranzitii
+   always @ (*) begin
+     st_next = st; //initializare a starii urmatoare
+     write_enable=0;
+     case(st) //se stabileste urmatoare stare pentru fiecare posibilitate de stare curenta
+      ST_RST: if(b) st_next=ST_BEGIN; //din reset trecem in begin
+      ST_BEGIN: st_next=ST_LOAD; //din begin trecem in load
+      ST_LOAD: st_next=ST_DECODE; //din load trecem in decode, decodarea codului operatiei
+      ST_DECODE:case(op_latched)
+                    2'b00: st_next = ST_ADD;
+                    2'b01: st_next = ST_SUB;
+                    2'b10: st_next = ST_MULT;
+                    2'b11: st_next = ST_DIV;
+                 endcase
+      ST_ADD: st_next=ST_WRITE; //din adunare/scadere trecem direct in write, scrierea in outbus
+      ST_SUB: st_next=ST_WRITE;
+      ST_MULT:   if(wait_cnt == 0) st_next = ST_WRITE; 
+      ST_DIV:    if(wait_cnt == 0) st_next = ST_WRITE;
+      ST_WRITE:  if(e) st_next = ST_END;
+      ST_END:    st_next = ST_RST;
+      default: st_next=ST_RST;
+    endcase
+   end
 
-    always @(posedge clk or posedge rst) begin
-        if (rst) st <= ST_RST;
-        else     st <= st_next;
-    end
-
-    always @(*) begin
-        st_next = st;
-        case(st)
-            ST_RST:       if (b)          st_next = ST_LOAD;
-            ST_LOAD:                      st_next = ST_DECODE;
-            ST_DECODE:    case(op_latched)
-                              2'b00: st_next = ST_ADD;
-                              2'b01: st_next = ST_SUB;
-                              2'b10: st_next = ST_MULT;
-                              2'b11: st_next = ST_DIV;
-                          endcase
-            ST_ADD:                       st_next = ST_WRITE;
-            ST_SUB:                       st_next = ST_WRITE;
-            ST_MULT:                      st_next = ST_MULT_WAIT;
-            ST_MULT_WAIT: if (!flag_mult) st_next = ST_WRITE;
-            ST_DIV:                       st_next = ST_DIV_WAIT;
-            ST_DIV_WAIT:  if (!flag_div)  st_next = ST_WRITE;
-            ST_WRITE:     if (e)          st_next = ST_END;
-            ST_END:       if (load)       st_next = ST_LOAD;
-                          else if (b)     st_next = ST_LOAD;
-            default:                      st_next = ST_RST;
-        endcase
-    end
-
-    always @(*) begin
+   //blocul combinational pentru iesiri
+  always @(*) begin
         {c_add, c_sub, c_mult, c_div} = 4'b0000;
         write_enable = 0;
         case(st)
-            ST_ADD:       c_add  = 1;
-            ST_SUB:       c_sub  = 1;
-            ST_MULT,
-            ST_MULT_WAIT: c_mult = 1;
-            ST_DIV,
-            ST_DIV_WAIT:  c_div  = 1;
+            ST_ADD:   c_add  = 1;
+            ST_SUB:   c_sub  = 1;
+            ST_MULT:  c_mult = 1;
+            ST_DIV:   c_div  = 1;
             ST_WRITE: begin
                 write_enable = 1;
-                // Hold the active command signal during the write phase
+                // Mentinem semnalul activ pentru ca ALU MUX sa ramana pe pozitia corecta
+                case(op_latched)
+                    2'b00: c_add  = 1;
+                    2'b01: c_sub  = 1;
+                    2'b10: c_mult = 1;
+                    2'b11: c_div  = 1;
+                endcase
+            end
+        endcase
+    end
+    
+    Ai intuit perfect problema! Motivul pentru care ALU-ul face doar adun?ri indiferent de opera?ie este exact lipsa acelor semnale (flag_mult ?i flag_div) din FSM.
+
+Iat? ce se întâmpla în spate:
+Deoarece flag_mult ?i flag_div erau neconectate, ele aveau valoarea Z (High Impedance) sau X (Unknown). Când FSM-ul ajungea la linia if(!flag_mult) st_next=ST_WRITE;, condi?ia e?ua sau d?dea eroare, iar FSM-ul ie?ea de pe traseul normal, for?ând toate semnalele c_add, c_sub, c_mult, c_div pe 0. Deoarece ALU-ul t?u selecteaz? adunarea ca variant? de "default" când restul sunt 0, primeai mereu rezultatul adun?rii.
+
+Mai mult, ai avut o idee excelent? s? folosim modulul register în top_alu_fsm pentru a salva x ?i y. Trebuie doar s? fim aten?i la o capcan?: register.v face reset când prime?te 1, dar restul sistemului t?u face reset când prime?te 0. Am corectat asta inversând semnalul la instan?iere (~rst).
+
+Iat? cele dou? module complet reparate. Am eliminat semnalele moarte ?i am ad?ugat un contor intern în FSM pentru a înlocui flag-urile, plus afi?aje de debug exact cum ai cerut, ca s? po?i urm?ri "pe viu" ce gânde?te automatul.
+
+1. Modulul top_alu_fsm.v actualizat
+Am cur??at porturile ?i am ad?ugat regi?trii pentru x ?i y.
+
+Verilog
+module top_alu_fsm(
+  input clk, rst, 
+  input b, e, load, 
+  input [1:0] op_code, 
+  input [7:0] x, y,  
+  output [15:0] rez, 
+  output div_zero_err
+);
+
+  // Semnale interne
+  wire c_add, c_sub, c_mult, c_div;
+  wire write_enable;
+  
+  // Regi?tri pentru operanzi (ATENTIE: am pus ~rst deoarece register.v e activ pe 1, iar restul e activ pe 0)
+  wire [7:0] x_reg, y_reg;
+  register #(.w(8)) rx(.clk(clk), .load(load), .rst(~rst), .d(x), .q(x_reg));
+  register #(.w(8)) ry(.clk(clk), .load(load), .rst(~rst), .d(y), .q(y_reg));
+
+  // Instanta FSM (fara flag-urile cu probleme)
+  fsm control_unit(
+    .clk(clk),
+    .rst(rst),
+    .b(b),
+    .e(e),
+    .load(load),
+    .op_code(op_code),
+    .c_add(c_add),
+    .c_sub(c_sub),
+    .c_mult(c_mult),
+    .c_div(c_div),
+    .write_enable(write_enable)
+  );
+
+  // Instanta ALU
+  alu datapath(
+    .clk(clk),
+    .rst(rst),
+    .c_add(c_add),
+    .c_sub(c_sub),
+    .c_mult(c_mult),
+    .c_div(c_div),
+    .x(x_reg),    // ALU primeste valorile salvate!
+    .y(y_reg),    // ALU primeste valorile salvate!
+    .rez(rez),
+    .ready(),     // Lasam liber daca nu e folosit in exterior
+    .div_zero_err(div_zero_err)
+  );
+
+endmodule
+2. Modulul control_unit.v (FSM) actualizat
+Am înlocuit verificarea de flag-uri cu un mic contor intern (wait_cnt) care a?teapt? cele 8 cicluri necesare pentru înmul?ire/împ?r?ire, f?când FSM-ul complet independent ?i imun la erori de conectare. De asemenea, am ad?ugat func?ia de $display.
+
+Verilog
+module fsm(
+  input clk, rst, b, e, load, 
+  input [1:0] op_code, 
+  output reg c_add, c_sub, c_mult, c_div,
+  output reg write_enable
+);
+
+  localparam ST_BEGIN=4'd0, ST_LOAD=4'd1, ST_DECODE=4'd2,
+             ST_ADD=4'd3, ST_SUB=4'd4, ST_MULT=4'd5, 
+             ST_DIV=4'd6, ST_WRITE=4'd7, ST_END=4'd8, ST_RST=4'd9;
+  
+  reg [3:0] st, st_next; 
+  reg [1:0] op_latched;
+  reg [3:0] wait_cnt; // Contor pentru operatiile lungi
+
+  // Salvarea operatiei curente
+  always @(posedge clk or negedge rst) begin
+      if (!rst) op_latched <= 2'b00;
+      else if (st == ST_LOAD) op_latched <= op_code;
+  end
+  
+  // NOU: Contor intern de asteptare
+  always @(posedge clk or negedge rst) begin
+      if (!rst) wait_cnt <= 0;
+      else if (st == ST_DECODE) begin
+          if (op_latched == 2'b10 || op_latched == 2'b11) 
+              wait_cnt <= 8; // Setam asteptarea la 8 cicluri
+          else 
+              wait_cnt <= 0;
+      end
+      else if (wait_cnt > 0) wait_cnt <= wait_cnt - 1;
+  end
+    
+  // Actualizare stare
+  always @ (posedge clk or negedge rst) begin 
+    if(!rst) st <= ST_RST; 
+    else st <= st_next;
+  end
+
+  // Tranzitii
+  always @ (*) begin
+     st_next = st; 
+     case(st) 
+      ST_RST:    if(b) st_next = ST_BEGIN; 
+      ST_BEGIN:  st_next = ST_LOAD; 
+      ST_LOAD:   st_next = ST_DECODE; 
+      ST_DECODE: case(op_latched)
+                    2'b00: st_next = ST_ADD;
+                    2'b01: st_next = ST_SUB;
+                    2'b10: st_next = ST_MULT;
+                    2'b11: st_next = ST_DIV;
+                 endcase
+      ST_ADD:    st_next = ST_WRITE; 
+      ST_SUB:    st_next = ST_WRITE; 
+      // Folosim contorul in loc de flag_mult/flag_div
+      ST_MULT:   if(wait_cnt == 0) st_next = ST_WRITE; 
+      ST_DIV:    if(wait_cnt == 0) st_next = ST_WRITE;
+      ST_WRITE:  if(e) st_next = ST_END; 
+      ST_END:    st_next = ST_RST;
+      default:   st_next = ST_RST;
+     endcase
+   end
+
+   // Iesiri
+   always @(*) begin
+        {c_add, c_sub, c_mult, c_div} = 4'b0000;
+        write_enable = 0;
+        case(st)
+            ST_ADD:   c_add  = 1;
+            ST_SUB:   c_sub  = 1;
+            ST_MULT:  c_mult = 1;
+            ST_DIV:   c_div  = 1;
+            ST_WRITE: begin
+                write_enable = 1;
+                // Mentinem semnalul curent pentru ALU
                 case(op_latched)
                     2'b00: c_add  = 1;
                     2'b01: c_sub  = 1;
@@ -77,4 +247,14 @@ module fsm(
         endcase
     end
 
-endmodule
+    // ==========================================
+    // TASK DE DEBUG - Te va ajuta enorm in consola
+    // ==========================================
+    always @(posedge clk) begin
+        if (rst) begin // Rulam debug doar cand NU suntem in reset
+            $display("[FSM Debug] Timp:%0t | Stare:%0d | op:%b | cmd(ASMD):%b%b%b%b | asteapta:%0d", 
+                     $time, st, op_latched, c_add, c_sub, c_mult, c_div, wait_cnt);
+        end
+    end
+    
+ endmodule

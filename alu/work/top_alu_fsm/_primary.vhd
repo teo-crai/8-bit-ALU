@@ -10,6 +10,7 @@ entity top_alu_fsm is
         op_code         : in     vl_logic_vector(1 downto 0);
         x               : in     vl_logic_vector(7 downto 0);
         y               : in     vl_logic_vector(7 downto 0);
-        rez             : out    vl_logic_vector(15 downto 0)
+        rez             : out    vl_logic_vector(15 downto 0);
+        div_zero_err    : out    vl_logic
     );
 end top_alu_fsm;

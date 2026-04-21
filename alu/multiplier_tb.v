@@ -54,7 +54,7 @@ module multiplier_tb;
     execute_multiplication(8'd127, 8'd2); 
 
     $display("--Done--");
-    $finish;
+    $stop;
   end
 
 endmodule
